@@ -18,3 +18,14 @@ Route::options('/refresh-token', function () {
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/update-password', [AuthController::class, 'updatePassword'])->middleware('auth:api');
+
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('user/profile/{id}', [AuthController::class, 'getProfile']);
+    Route::post('user/profile/{id}', [AuthController::class, 'updateProfile']);
+    Route::post('user/profile/photo/{id}', [AuthController::class, 'uploadProfilePhoto']);
+    Route::delete('user/profile/photo/{id}', [AuthController::class, 'removeProfilePhoto']);
+
+
+});
+

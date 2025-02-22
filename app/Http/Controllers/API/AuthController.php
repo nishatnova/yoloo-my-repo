@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeEmail;
 use App\Notifications\ResetPasswordNotification;
@@ -76,7 +78,7 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-            JWTAuth::factory()->setTTL(1); // 2 days
+            JWTAuth::factory()->setTTL(60); // 2 days
 
 
             // If token is invalid or expired, attempt will return false
@@ -89,7 +91,7 @@ class AuthController extends Controller
             $user = auth()->user();
 
             // Generate the refresh token
-            JWTAuth::factory()->setTTL(2); // 2 weeks
+            JWTAuth::factory()->setTTL(20160); // 2 weeks
             $refreshToken = JWTAuth::fromUser($user);
 
             // Store the access token in a secure cookie
@@ -246,6 +248,153 @@ class AuthController extends Controller
             return $this->sendError('Error refreshing token', []);
         }
     }
+
+    // private function generateImageUrl($path)
+    // {
+    //     return $path ? env('APP_URL') . '/storage/app/public/' . $path : null;
+
+    //     //return $path ? url('storage/' . $path) : null;
+
+    // }
+
+    public function getProfile($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo' => $user->profile_photo ? Storage::url($user->profile_photo) : null,
+                'role' => $user->role,
+            ]
+        ]);
+    }
+
+    /**
+     * Update user's name and email.
+     */
+    public function updateProfile(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+        ]);
+
+        // $user->update($request->only(['name', 'email']));
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        return response()->json(['message' => 'Profile updated successfully.', 'user' => $user]);
+    }
+    /**
+     * Upload a new profile photo.
+     */
+    public function uploadProfilePhoto(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $request->validate([
+            'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Delete the old profile photo if it exists
+        if ($user->profile_photo && Storage::exists($user->profile_photo)) {
+            Storage::delete($user->profile_photo);
+        }
+
+        // Store the new profile photo
+        $filePath = $request->file('profile_photo')->store('profile_photos');
+
+        // Update user's profile photo path
+        $user->update(['profile_photo' => $filePath]);
+
+        return response()->json([
+            'message' => 'Profile photo updated successfully.',
+            'profile_photo' => Storage::url($filePath),
+        ]);
+    }
+
+
+    /**
+     * Remove the current profile photo.
+     */
+    public function removeProfilePhoto($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        if ($user->profile_photo && Storage::exists($user->profile_photo)) {
+            Storage::delete($user->profile_photo);
+            $user->update(['profile_photo' => null]);
+
+            return response()->json(['message' => 'Profile photo removed successfully.']);
+        }
+
+        return response()->json(['error' => 'No profile photo to delete.'], 404);
+    }
+
+
+    // public function updateProfile(Request $request)
+    // {
+    //     try {
+    //         $user = User::find(Auth::id());
+
+    //         $request->validate([
+    //             'name' => 'nullable|string|max:255',
+    //             'email' => 'nullable|email|unique:users,email,' . $user->id,
+    //             'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:20480',
+    //         ]);
+
+    //         // Update name and email
+    //         $user->name = $request->name;
+    //         $user->email = $request->email;
+
+    //         // Check if the profile photo is uploaded
+    //         if ($request->hasFile('profile_photo')) {
+    //             // Delete old profile photo if exists
+    //             if ($user->profile_photo && Storage::exists($user->profile_photo)) {
+    //                 Storage::delete($user->profile_photo);
+    //             }
+
+    //             // Store the new profile photo
+    //             $filePath = $request->file('profile_photo')->store('profile_photos');
+    //             $user->profile_photo = $filePath;
+    //         }
+
+    //         $user->save();
+
+    //         return response()->json([
+    //             'message' => 'Profile updated successfully.',
+    //             'user' => $user,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'error' => 'An error occurred while updating the profile.',
+    //         ], 500);
+    //     }
+    // }
 
     
 }
