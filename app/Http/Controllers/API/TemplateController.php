@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Traits\ResponseTrait;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Template;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TemplateController extends Controller
 {
@@ -14,9 +16,17 @@ class TemplateController extends Controller
 
     public function index()
     {
-        $templates = Template::select('id', 'name', 'title', 'price')->get();
+        try {
+            $templates = Template::select('id', 'name', 'title', 'price')->get();
 
-        return $this->sendResponse($templates, 'Templates retrieved successfully.');
+            if ($templates->isEmpty()) {
+                return $this->sendError('No templates found.', [], 404);
+            }
+
+            return $this->sendResponse($templates, 'Templates retrieved successfully.');
+        } catch (Exception $e) {
+            return $this->sendError('Failed to fetch templates. Please try again.' .$e->getMessage(), [], 500);
+        }
     }
 
     /**
@@ -24,25 +34,33 @@ class TemplateController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (Auth::user()->role !== 'admin') {
-            return $this->sendError('Access denied. Only admins can update templates.', [], 403);
-        }
+        try {
+            if (Auth::user()->role !== 'admin') {
+                return $this->sendError('Access denied. Only admins can update templates.', [], 403);
+            }
 
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-        ]);
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'price' => 'required|numeric|min:0',
+            ]);
 
-        $template = Template::find($id);
-        if (!$template) {
+            // Find template, throw error if not found
+            $template = Template::findOrFail($id);
+
+            $template->update($validated);
+
+            return $this->sendResponse([
+                'id' => $template->id,
+                'name' => $template->name,
+                'title' => $template->title,
+                'price' => $template->price
+            ], 'Template updated successfully.');
+        } catch (ModelNotFoundException $e) {
             return $this->sendError('Template not found.', [], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->sendError($e->validator->errors()->first(), [], 422);
+        } catch (Exception $e) {
+            return $this->sendError('An unexpected error occurred. Please try again.' .$e->getMessage(), [], 500);
         }
-
-        $template->update([
-            'title' => $request->title,
-            'price' => $request->price,
-        ]);
-
-        return $this->sendResponse($template, 'Template updated successfully.');
     }
 }
