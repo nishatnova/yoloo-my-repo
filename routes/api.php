@@ -6,6 +6,8 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Middleware\JwtAuthMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\API\TemplateController;
+use App\Http\Controllers\API\FaqController;
+use App\Http\Controllers\API\PackageController;
 
 
 
@@ -20,6 +22,9 @@ use App\Http\Controllers\API\TemplateController;
             ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
             ->header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     });
+
+    Route::get('/templates', [TemplateController::class, 'index']);
+    Route::get('/faqs', [FaqController::class, 'index']);
 
 
 
@@ -39,8 +44,17 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('user/profile/photo/{id}', [AuthController::class, 'uploadProfilePhoto']);
         Route::delete('user/profile/photo/{id}', [AuthController::class, 'removeProfilePhoto']);
 
-        Route::get('/templates', [TemplateController::class, 'index']);
+        // Templates
         Route::post('/templates/{id}', [TemplateController::class, 'update']);
+
+        //FAQ
+        Route::post('/faq/create-faq', [FaqController::class, 'store']);
+        Route::post('/faq/update-faq/{id}', [FaqController::class, 'update']);
+        Route::delete('/faq/delete-faq/{id}', [FaqController::class, 'destroy']);
+
+        Route::get('/packages', [PackageController::class, 'index']);
+        Route::post('/packages', [PackageController::class, 'store']);
+        // Route::post('/packages/{id}', [PackageController::class, 'update']);
     });
 
     //  GUEST Routes (Only "guest" role can access)

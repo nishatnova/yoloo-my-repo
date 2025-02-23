@@ -28,7 +28,7 @@ class RoleMiddleware
 
             // Check if user exists and has the required role
             if (!$user || !in_array($user->role, $roles)) {
-                return $this->sendError('Access denied. Insufficient permissions.', [], 403);
+                return $this->sendError('Access denied. Do not have permission.', [], 403);
             }
         } catch (\Exception $e) {
             return $this->sendError('Unauthorized. Please provide a valid token.', [], 401);
