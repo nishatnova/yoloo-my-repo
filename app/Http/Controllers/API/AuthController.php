@@ -83,7 +83,7 @@ class AuthController extends Controller
 
             // If token is invalid or expired, attempt will return false
             if (!$accessToken = JWTAuth::attempt($request->only('email', 'password'))) {
-                return $this->sendError('Invalid credentials or token expired', [], 401);
+                return $this->sendError('Invalid credentials', [], 401);
             }
 
 
@@ -190,7 +190,7 @@ class AuthController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError($e->validator->errors()->first(), []);
         } catch (\Exception $e) {
-            return $this->sendError('An error occurred during the password reset process.', []);
+            return $this->sendError('An error occurred during the password reset process.' .$e->getMessage(), []);
         }
     }
 
@@ -215,7 +215,7 @@ class AuthController extends Controller
 
             return $this->sendResponse([], 'Password updated successfully.');
         } catch (\Exception $e) {
-            return $this->sendError('An error occurred while updating the password.', []);
+            return $this->sendError('An error occurred while updating the password.' .$e->getMessage(), []);
         }
 
     }
@@ -259,21 +259,24 @@ class AuthController extends Controller
 
     public function getProfile($id)
     {
-        $user = User::find($id);
+        try {
+            $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
+            if (!$user) {
+                return $this->sendError('User not found.', [], 404);
+            }
 
-        return response()->json([
-            'user' => [
+            return $this->sendResponse([
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'profile_photo' => $user->profile_photo ? Storage::url($user->profile_photo) : null,
+                'profile_photo' => $user->profile_photo ? asset('storage/' . $user->profile_photo) : null,
                 'role' => $user->role,
-            ]
-        ]);
+            ], 'User profile retrieved successfully.');
+        } catch (\Exception $e) {
+            Log::error("Error fetching profile: " . $e->getMessage());
+            return $this->sendError('Error fetching user profile.', [], 500);
+        }
     }
 
     /**
@@ -281,56 +284,69 @@ class AuthController extends Controller
      */
     public function updateProfile(Request $request, $id)
     {
-        $user = User::find($id);
+        try {
+            $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
+            if (!$user) {
+                return $this->sendError('User not found.', [], 404);
+            }
+
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $id,
+            ]);
+
+            $user->update([
+                'name' => $request->name,
+                'email' => $request->email,
+            ]);
+
+            return $this->sendResponse([
+                'user' => $user,
+            ], 'Profile updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->sendError($e->validator->errors()->first(), [], 400);
+        } catch (\Exception $e) {
+            Log::error("Error updating profile: " . $e->getMessage());
+            return $this->sendError('Error updating profile.' . $e->getMessage(), [], 500);
         }
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
-        ]);
-
-        // $user->update($request->only(['name', 'email']));
-
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
-
-        return response()->json(['message' => 'Profile updated successfully.', 'user' => $user]);
     }
     /**
      * Upload a new profile photo.
      */
     public function uploadProfilePhoto(Request $request, $id)
     {
-        $user = User::find($id);
+        try {
+            $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
+            if (!$user) {
+                return $this->sendError('User not found.', [], 404);
+            }
+
+            $request->validate([
+                'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+
+            // Delete old profile photo if exists
+            if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
+                Storage::disk('public')->delete($user->profile_photo);
+            }
+
+            // Store the new profile photo in the 'public' disk
+            $filePath = $request->file('profile_photo')->store('profile_photos', 'public');
+
+            // Update user's profile photo path
+            $user->update(['profile_photo' => $filePath]);
+
+            return $this->sendResponse([
+                'profile_photo' => asset('storage/' . $filePath),
+            ], 'Profile photo updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->sendError($e->validator->errors()->first(), [], 400);
+        } catch (\Exception $e) {
+            Log::error("Error uploading profile photo: " . $e->getMessage());
+            return $this->sendError('Error uploading profile photo.' . $e->getMessage(), [], 500);
         }
-
-        $request->validate([
-            'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        // Delete the old profile photo if it exists
-        if ($user->profile_photo && Storage::exists($user->profile_photo)) {
-            Storage::delete($user->profile_photo);
-        }
-
-        // Store the new profile photo
-        $filePath = $request->file('profile_photo')->store('profile_photos');
-
-        // Update user's profile photo path
-        $user->update(['profile_photo' => $filePath]);
-
-        return response()->json([
-            'message' => 'Profile photo updated successfully.',
-            'profile_photo' => Storage::url($filePath),
-        ]);
     }
 
 
@@ -339,20 +355,26 @@ class AuthController extends Controller
      */
     public function removeProfilePhoto($id)
     {
-        $user = User::find($id);
+        try {
+            $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
+            if (!$user) {
+                return $this->sendError('User not found.', [], 404);
+            }
 
-        if ($user->profile_photo && Storage::exists($user->profile_photo)) {
-            Storage::delete($user->profile_photo);
+            if (!$user->profile_photo || !Storage::disk('public')->exists($user->profile_photo)) {
+                return $this->sendError('No profile photo to delete.', [], 404);
+            }
+
+            // Delete the profile photo
+            Storage::disk('public')->delete($user->profile_photo);
             $user->update(['profile_photo' => null]);
 
-            return response()->json(['message' => 'Profile photo removed successfully.']);
+            return $this->sendResponse([], 'Profile photo removed successfully.');
+        } catch (\Exception $e) {
+            Log::error("Error removing profile photo: " . $e->getMessage());
+            return $this->sendError('Error removing profile photo.' . $e->getMessage(), [], 500);
         }
-
-        return response()->json(['error' => 'No profile photo to delete.'], 404);
     }
 
 
