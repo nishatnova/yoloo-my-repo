@@ -64,7 +64,7 @@ class PackageController extends Controller
                 ];
             });
 
-            $totalPackages = $query->count();
+            // $totalPackages = $query->count();
 
             return $this->sendResponse([
                 'packages' => $packages->items(),
@@ -209,21 +209,23 @@ class PackageController extends Controller
             // Find the package
             $package = Package::findOrFail($id);
 
-            // Update cover image if provided
+            // **Fix Cover Image Issue**
             if ($request->hasFile('cover_image')) {
+                // Store new image and update path correctly
                 $coverImagePath = $request->file('cover_image')->store('packages', 'public');
-                $package->cover_image = $coverImagePath;
+                $validated['cover_image'] = $coverImagePath; // Add to validated array
             }
 
-            // Update venue photos if provided
+            // Update package
+            $package->update($validated);
+
+            // Store venue photos if provided
             if ($request->hasFile('venue_images')) {
                 foreach ($request->file('venue_images') as $photo) {
                     $photoPath = $photo->store('package_photos', 'public');
                     $package->images()->create(['image_path' => $photoPath]);
                 }
             }
-
-            $package->update($validated);
 
             return $this->sendResponse([
                 'id' => $package->id,
@@ -277,5 +279,97 @@ class PackageController extends Controller
             return $this->sendError('Error deleting package: ' . $e->getMessage(), [], 500);
         }
     }
+
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->query('package'); // Get the search query
+
+            if (!$query) {
+                return $this->sendError('No search query provided.', [], 400);
+            }
+
+            // Search packages by title or location
+            $packages = Package::where('title', 'LIKE', "%$query%")
+                ->orWhere('location', 'LIKE', "%$query%")
+                ->get();
+
+            // If no packages found, return an appropriate response
+            if ($packages->isEmpty()) {
+                return $this->sendResponse([], 'No packages found matching your search.');
+            }
+
+            // Format the response data
+            $formattedPackages = $packages->map(function ($package) {
+                return [
+                    'id' => $package->id,
+                    'title' => $package->title,
+                    'location' => $package->location,
+                ];
+            });
+
+            return $this->sendResponse($formattedPackages, 'Search results retrieved successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return $this->sendError('Database error occurred. Please try again later.', [], 500);
+        } catch (\Exception $e) {
+            return $this->sendError('An unexpected error occurred: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+
+    public function searchPackagePage(Request $request)
+{
+    try {
+        $venue = $request->query('venue'); // Get venue search input (title)
+        $location = $request->query('location'); // Get location search input
+
+        if (!$venue && !$location) {
+            return $this->sendError('Please provide a search query for venue, location, or both.', [], 400);
+        }
+
+        $query = Package::query();
+
+        // If both venue & location are provided
+        if ($venue && $location) {
+            $query->where('title', 'LIKE', "%$venue%")
+                  ->where('location', 'LIKE', "%$location%");
+        } else {
+            // If only venue is provided
+            if ($venue) {
+                $query->where('title', 'LIKE', "%$venue%");
+            }
+
+            // If only location is provided
+            else {
+                $query->where('location', 'LIKE', "%$location%");
+            }
+        }
+
+        // Get results with a limit of 10 (optional)
+        $packages = $query->get();
+
+        if ($packages->isEmpty()) {
+            return $this->sendResponse([], 'No matching packages found.');
+        }
+
+        $formattedPackages = $packages->map(function ($package) {
+            return [
+                'id' => $package->id,
+                'title' => $package->title,
+                'location' => $package->location,
+                'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null,
+            ];
+        });
+
+        return $this->sendResponse($formattedPackages, 'Search results retrieved successfully.');
+    } catch (\Illuminate\Database\QueryException $e) {
+        return $this->sendError('Database error occurred. Please try again later.', [], 500);
+    } catch (\Exception $e) {
+        return $this->sendError('An unexpected error occurred: ' . $e->getMessage(), [], 500);
+    }
+}
+
+
+
     
 }

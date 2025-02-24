@@ -25,6 +25,11 @@ use App\Http\Controllers\API\PackageController;
 
     Route::get('/templates', [TemplateController::class, 'index']);
     Route::get('/faqs', [FaqController::class, 'index']);
+    Route::get('/search', [PackageController::class, 'search']);
+    Route::get('/packages/search', [PackageController::class, 'searchPackagePage']);
+
+    Route::get('/packages', [PackageController::class, 'index']);
+    Route::get('/packages/{id}', [PackageController::class, 'show']);
 
 
 
@@ -52,9 +57,8 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('/faq/update-faq/{id}', [FaqController::class, 'update']);
         Route::delete('/faq/delete-faq/{id}', [FaqController::class, 'destroy']);
 
-        Route::get('/packages', [PackageController::class, 'index']);
+       
         Route::post('/packages', [PackageController::class, 'store']);
-        Route::get('/packages/{id}', [PackageController::class, 'show']);
         Route::post('/packages/{id}', [PackageController::class, 'update']);
         Route::delete('/packages/{id}', [PackageController::class, 'destroy']);
         
