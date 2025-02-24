@@ -54,7 +54,10 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
 
         Route::get('/packages', [PackageController::class, 'index']);
         Route::post('/packages', [PackageController::class, 'store']);
-        // Route::post('/packages/{id}', [PackageController::class, 'update']);
+        Route::get('/packages/{id}', [PackageController::class, 'show']);
+        Route::post('/packages/{id}', [PackageController::class, 'update']);
+        Route::delete('/packages/{id}', [PackageController::class, 'destroy']);
+        
     });
 
     //  GUEST Routes (Only "guest" role can access)
