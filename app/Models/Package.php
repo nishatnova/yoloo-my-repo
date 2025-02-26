@@ -12,7 +12,7 @@ class Package extends Model
 
     protected $fillable = [
         'title', 'location', 'about', 'estate_details',
-        'included_services', 'price', 'address', 'email', 'phone', 'cover_image', 'active_status'
+        'included_services', 'price', 'address', 'email', 'phone', 'capacity', 'cover_image', 'active_status'
     ];
 
     protected $casts = [

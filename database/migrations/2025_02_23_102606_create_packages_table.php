@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->integer('capacity')->nullable();
             $table->string('cover_image')->nullable(); // Store image path
             $table->tinyInteger('active_status')->default(1)->nullable();
             $table->timestamps();
