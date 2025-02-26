@@ -8,6 +8,7 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\API\TemplateController;
 use App\Http\Controllers\API\FaqController;
 use App\Http\Controllers\API\PackageController;
+use App\Http\Controllers\API\JobPostController;
 
 
 
@@ -30,6 +31,8 @@ use App\Http\Controllers\API\PackageController;
 
     Route::get('/packages', [PackageController::class, 'index']);
     Route::get('/packages/{id}', [PackageController::class, 'show']);
+
+    Route::get('/job-posts', [JobPostController::class, 'index']);
 
 
 
@@ -61,6 +64,8 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('/packages', [PackageController::class, 'store']);
         Route::post('/packages/{id}', [PackageController::class, 'update']);
         Route::delete('/packages/{id}', [PackageController::class, 'destroy']);
+
+        Route::post('/job-posts', [JobPostController::class, 'store']);
         
     });
 
