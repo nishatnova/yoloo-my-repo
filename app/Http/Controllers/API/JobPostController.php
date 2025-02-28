@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Traits\ResponseTrait;
 use App\Models\JobPost;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class JobPostController extends Controller
 {
@@ -116,4 +119,90 @@ class JobPostController extends Controller
             return $this->sendError('Error creating package: ' . $e->getMessage(), [], 500);
         }
     }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            if (Auth::user()->role !== 'admin') {
+                return $this->sendError('Access denied. Only admins can update packages.', [], 403);
+            }
+
+            $validated = $request->validate([
+                'job_title' => 'required|string',
+                'role' => 'required|string',
+                'about_job' => 'nullable|string',
+                'responsibilities' => 'nullable|string', 
+                'requirements' => 'nullable|string', 
+                'budget' => 'required|numeric|min:0',
+                'location' => 'nullable|string',
+                'application_deadline' => 'nullable|date',
+                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'status' => 'required',
+            ]);
+
+            // Decode JSON fields to array if provided
+            if (isset($validated['responsibilities'])) {
+                $validated['responsibilities'] = json_decode($validated['responsibilities'], true);
+            }
+            if (isset($validated['requirements'])) {
+                $validated['requirements'] = json_decode($validated['requirements'], true);
+            }
+
+            // Find the package
+            $job = JobPost::findOrFail($id);
+
+            // **Fix Cover Image Issue**
+            if ($request->hasFile('cover_image')) {
+                // Store new image and update path correctly
+                $coverImagePath = $request->file('cover_image')->store('packages', 'public');
+                $validated['cover_image'] = $coverImagePath; // Add to validated array
+            }
+
+            // Update package
+            $job->update($validated);
+
+            return $this->sendResponse([
+                'id' => $job->id,
+                'job_title' => $job->job_title,
+                'role' => $job->role,
+                'about_job' => $job->about_job,
+                'responsibilities' => $job->responsibilities, // Full estate details array
+                'requirements' => $job->requirements,
+                'budget' => $job->budget,
+                'location' => $job->location,
+                'application_deadline' => $job->application_deadline,
+                'cover_image' => $job->cover_image ? asset('storage/' . $job->cover_image) : null,
+                'status' => $job->status,
+            ], 'Job Post updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
+        } catch (\Exception $e) {
+            return $this->sendError('Error updating package: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            // Check if the job post exists
+            $job = JobPost::findOrFail($id);
+
+            // Delete the cover image from storage if it exists
+            if ($job->cover_image && Storage::exists('public/' . $job->cover_image)) {
+                Storage::delete('public/' . $job->cover_image);
+            }
+
+            // Delete the job post
+            $job->delete();
+
+            return $this->sendResponse([], 'Job Post deleted successfully.');
+        } catch (ModelNotFoundException $e) {
+            return $this->sendError('Job Post not found.', [], 404);
+        } catch (\Exception $e) {
+            return $this->sendError('Error deleting job post: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+
+    
 }

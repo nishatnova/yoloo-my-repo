@@ -9,6 +9,7 @@ use App\Http\Controllers\API\TemplateController;
 use App\Http\Controllers\API\FaqController;
 use App\Http\Controllers\API\PackageController;
 use App\Http\Controllers\API\JobPostController;
+use App\Http\Controllers\API\ContactController;
 
 
 
@@ -33,6 +34,7 @@ use App\Http\Controllers\API\JobPostController;
     Route::get('/packages/{id}', [PackageController::class, 'show']);
 
     Route::get('/job-posts', [JobPostController::class, 'index']);
+    Route::post('/contact-us', [ContactController::class, 'store']);
 
 
 
@@ -47,10 +49,10 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
 
     // ADMIN Routes (Only "admin" role can access)
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('user/profile/{id}', [AuthController::class, 'getProfile']);
-        Route::post('user/profile/{id}', [AuthController::class, 'updateProfile']);
-        Route::post('user/profile/photo/{id}', [AuthController::class, 'uploadProfilePhoto']);
-        Route::delete('user/profile/photo/{id}', [AuthController::class, 'removeProfilePhoto']);
+        Route::get('admin/profile/{id}', [AuthController::class, 'getProfile']);
+        Route::post('admin/profile/{id}', [AuthController::class, 'updateProfile']);
+        Route::post('admin/profile/photo/{id}', [AuthController::class, 'uploadProfilePhoto']);
+        Route::delete('admin/profile/photo/{id}', [AuthController::class, 'removeProfilePhoto']);
 
         // Templates
         Route::post('/templates/{id}', [TemplateController::class, 'update']);
@@ -66,6 +68,8 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::delete('/packages/{id}', [PackageController::class, 'destroy']);
 
         Route::post('/job-posts', [JobPostController::class, 'store']);
+        Route::post('/job-posts/{id}', [JobPostController::class, 'update']);
+        Route::delete('/job-posts/{id}', [JobPostController::class, 'destroy']);
         
     });
 
