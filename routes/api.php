@@ -10,8 +10,7 @@ use App\Http\Controllers\API\FaqController;
 use App\Http\Controllers\API\PackageController;
 use App\Http\Controllers\API\JobPostController;
 use App\Http\Controllers\API\ContactController;
-
-
+use App\Http\Controllers\API\JobApplicationController;
 
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -42,6 +41,7 @@ use App\Http\Controllers\API\ContactController;
 Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/update-password', [AuthController::class, 'updatePassword']);
+    Route::post('/job-post/apply/{id}', [JobApplicationController::class, 'apply']);
 
     //  USER Routes (Only "user" role can access)
     Route::middleware(['role:user'])->group(function () {
@@ -71,6 +71,8 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('/job-posts', [JobPostController::class, 'store']);
         Route::post('/job-posts/{id}', [JobPostController::class, 'update']);
         Route::delete('/job-posts/{id}', [JobPostController::class, 'destroy']);
+
+        Route::get('/job-post/applicants', [JobApplicationController::class, 'getAllApplications']);
         
     });
 
