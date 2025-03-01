@@ -34,8 +34,9 @@ use App\Http\Controllers\API\ContactController;
     Route::get('/packages/{id}', [PackageController::class, 'show']);
 
     Route::get('/job-posts', [JobPostController::class, 'index']);
-    Route::post('/contact-us', [ContactController::class, 'store']);
+    Route::get('/job-posts/{id}', [JobPostController::class, 'show']);
 
+    Route::post('/contact-us', [ContactController::class, 'store']);
 
 
 Route::middleware([JwtAuthMiddleware::class])->group(function () {

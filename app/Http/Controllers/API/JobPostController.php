@@ -120,6 +120,29 @@ class JobPostController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        try {
+            $job = JobPost::findOrFail($id);
+
+            return $this->sendResponse([
+                'id' => $job->id,
+                'job_title' => $job->job_title,
+                'role' => $job->role,
+                'about_job' => $job->about_job,
+                'responsibilities' => $job->responsibilities, // Full estate details array
+                'requirements' => $job->requirements,
+                'budget' => $job->budget,
+                'location' => $job->location,
+                'application_deadline' => $job->application_deadline,
+                'cover_image' => $job->cover_image ? asset('storage/' . $job->cover_image) : null, 
+                'status' => $job->status,
+            ], 'Job retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
+        }
+    }
+
     public function update(Request $request, $id)
     {
         try {
