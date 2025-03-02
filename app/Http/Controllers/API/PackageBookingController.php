@@ -24,9 +24,18 @@ class PackageBookingController extends Controller
 
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
+            // $paymentIntent = PaymentIntent::create([
+            //     'amount' => $package->price * 100, // Convert price to cents
+            //     'currency' => 'usd',
+            // ]);
+
             $paymentIntent = PaymentIntent::create([
-                'amount' => $package->price * 100, // Convert price to cents
+                'amount' => $package->price * 100, 
                 'currency' => 'usd',
+                'automatic_payment_methods' => [
+                    'enabled' => true,  
+                    'allow_redirects' => 'never', // Avoid redirects
+                ],
             ]);
 
             return $this->sendResponse([
@@ -43,14 +52,16 @@ class PackageBookingController extends Controller
     {
         try {
             $validated = $request->validate([
-                'payment_method_id' => 'required|string',
-                'client_secret' => 'required|string',
+                'payment_method_id' => 'required|string', 
+                'payment_intent_id' => 'required|string', 
             ]);
 
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
-            $paymentIntent = PaymentIntent::retrieve($validated['client_secret']);
-            $paymentIntent->confirm(['payment_method' => $validated['payment_method_id']]);
+            $paymentIntent = PaymentIntent::retrieve($validated['payment_intent_id']);
+            $paymentIntent->confirm([
+                'payment_method' => $validated['payment_method_id'],
+            ]);
 
             $order = Order::create([
                 'user_id' => Auth::id(),

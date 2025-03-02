@@ -27,10 +27,10 @@ class TemplatePurchaseController extends Controller
             // ]);
 
             $paymentIntent = PaymentIntent::create([
-                'amount' => $template->price * 100, // Convert price to cents
+                'amount' => $template->price * 100, 
                 'currency' => 'usd',
                 'automatic_payment_methods' => [
-                    'enabled' => true,  // Automatically enable all payment methods
+                    'enabled' => true,  
                     'allow_redirects' => 'never', // Avoid redirects
                 ],
             ]);

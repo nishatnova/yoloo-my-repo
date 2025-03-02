@@ -54,8 +54,9 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/package/{package_id}/confirm-payment', [PackageBookingController::class, 'confirmPayment']);
 
     // Orders Routes (User can view their own orders)
-    Route::get('/user/orders', [OrderController::class, 'getOrders']);
-    Route::get('/user/orders/{order_id}', [OrderController::class, 'getOrderDetails']);
+    Route::get('/user/orders', [OrderController::class, 'getUserOrders']);
+    Route::get('/orders', [OrderController::class, 'getAllOrders']);
+    Route::get('/orders/{order_id}', [OrderController::class, 'getOrderDetails']);
 
     
 
