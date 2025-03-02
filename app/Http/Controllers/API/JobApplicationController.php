@@ -8,6 +8,10 @@ use App\Models\JobPost;
 use App\Models\JobApplication;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\ResponseTrait;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UserNotificationMail;
+use App\Mail\AdminNotificationMail;
+use App\Mail\ApplicationApprovedMail;
 
 class JobApplicationController extends Controller
 {
@@ -16,11 +20,11 @@ class JobApplicationController extends Controller
     {
         try {
         $validated = $request->validate([
-            'user_name' => 'required|string',
-            'user_email' => 'required|email',
-            'user_phone' => 'required|string',
-            'portfolio_link' => 'nullable|url',
-            'portfolio_description' => 'nullable|string|max:250',
+            'applicant_name' => 'required|string',
+            'applicant_email' => 'required|email',
+            'applicant_phone' => 'required|string',
+            'portfolio_link' => 'required|url',
+            'portfolio_description' => 'required|string',
         ]);
 
         $jobPost = JobPost::findOrFail($job_id);
@@ -29,13 +33,19 @@ class JobApplicationController extends Controller
             'user_id' => Auth::id(), 
             'job_post_id' => $job_id,
             'role' => $jobPost->role, 
-            'user_name' => $validated['user_name'],
-            'user_email' => $validated['user_email'],
-            'user_phone' => $validated['user_phone'],
+            'applicant_name' => $validated['applicant_name'],
+            'applicant_email' => $validated['applicant_email'],
+            'applicant_phone' => $validated['applicant_phone'],
             'portfolio_link' => $validated['portfolio_link'],
             'portfolio_description' => $validated['portfolio_description'],
-            'status' => 0, 
+            'status' => 'Pending',
         ]);
+
+        // Send Email to Applicant
+        Mail::to($application->applicant_email)->send(new UserNotificationMail($application, $jobPost));
+
+        // Send Email to Admin
+        Mail::to('nishat15-12132@diu.edu.bd')->send(new AdminNotificationMail($application, $jobPost));
 
         return $this->sendResponse([
             'application' => $application,
@@ -43,7 +53,7 @@ class JobApplicationController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
         } catch (\Exception $e) {
-            return $this->sendError('Error creating package: ' . $e->getMessage(), [], 500);
+            return $this->sendError('Error during apply: ' . $e->getMessage(), [], 500);
         }
     }
 
@@ -66,7 +76,7 @@ class JobApplicationController extends Controller
         $applications->getCollection()->transform(function ($application) {
             return [
                 'Application ID' => $application->id,
-                'Staff Name' => $application->user_name,
+                'Staff Name' => $application->applicant_name,
                 'Job Title' => optional($application->jobPost)->job_title,
                 'Status' => $application->status,
                 'Role' => $application->role,
@@ -84,7 +94,55 @@ class JobApplicationController extends Controller
             
         ], 'All applications retrieved successfully.');
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving job posts: ' . $e->getMessage(), [], 500);
+            return $this->sendError('Error retrieving job applications: ' . $e->getMessage(), [], 500);
         }
     }
+
+    public function updateApplicationStatus(Request $request, $application_id)
+    {
+        try {
+            $request->validate([
+                'status' => 'required|in:Pending,Approved,Rejected', // Ensure only valid values
+            ]);
+
+            $application = JobApplication::findOrFail($application_id);
+            $application->status = $request->status;
+            $application->save();
+
+            if ($request->status === 'Approved') {
+                Mail::to($application->applicant_email)->send(new ApplicationApprovedMail($application, $application->jobPost));
+            }
+
+            return $this->sendResponse([
+                'application' => $application,
+            ], 'Application status updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
+        } catch (\Exception $e) {
+            return $this->sendError('Error updating application status: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+    public function show($application_id)
+    {
+        try {
+            $application = JobApplication::with('jobPost', 'user')->findOrFail($application_id);
+
+            return $this->sendResponse([
+                'applicant_name' => $application->applicant_name,
+                'applicant_email' => $application->applicant_email,
+                'applicant_phone' => $application->applicant_phone,
+                'role' => $application->role,
+                'portfolio_link' => $application->portfolio_link,
+                'portfolio_description' => $application->portfolio_description,
+                'status' => $application->status,
+                'applied_on' => $application->created_at->format('d M, Y h:i A'),
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->sendError('Application not found', [], 404);
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving application: ' . $e->getMessage(), [], 500);
+        }
+    }
+
 }

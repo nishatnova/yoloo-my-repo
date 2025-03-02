@@ -72,7 +72,10 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('/job-posts/{id}', [JobPostController::class, 'update']);
         Route::delete('/job-posts/{id}', [JobPostController::class, 'destroy']);
 
-        Route::get('/job-post/applicants', [JobApplicationController::class, 'getAllApplications']);
+        Route::get('/job-applications', [JobApplicationController::class, 'getAllApplications']);
+
+        Route::post('/job-applications/status/{id}', [JobApplicationController::class, 'updateApplicationStatus']);
+        Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
         
     });
 

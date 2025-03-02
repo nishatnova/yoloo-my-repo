@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
+    /**ph
      * Run the migrations.
      */
     public function up(): void
@@ -16,12 +16,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
             $table->foreignId('job_post_id')->constrained()->onDelete('cascade'); 
             $table->string('role'); 
-            $table->string('user_name');
-            $table->string('user_email');
-            $table->string('user_phone')->nullable();
+            $table->string('applicant_name');
+            $table->string('applicant_email');
+            $table->string('applicant_phone')->nullable();
             $table->string('portfolio_link')->nullable();
-            $table->text('portfolio_description')->nullable();
-            $table->tinyInteger('status')->default(0);
+            $table->longText('portfolio_description')->nullable();
+            $table->string('status')->default('Pending');
             $table->timestamps();
         });
     }
