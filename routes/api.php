@@ -11,6 +11,9 @@ use App\Http\Controllers\API\PackageController;
 use App\Http\Controllers\API\JobPostController;
 use App\Http\Controllers\API\ContactController;
 use App\Http\Controllers\API\JobApplicationController;
+use App\Http\Controllers\API\TemplatePurchaseController;
+use App\Http\Controllers\API\PackageBookingController;
+use App\Http\Controllers\API\OrderController;
 
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -42,6 +45,19 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/update-password', [AuthController::class, 'updatePassword']);
     Route::post('/job-post/apply/{id}', [JobApplicationController::class, 'apply']);
+
+    Route::post('/template/{template_id}/payment', [TemplatePurchaseController::class, 'initiatePayment']);
+    Route::post('/template/{template_id}/confirm-payment', [TemplatePurchaseController::class, 'confirmPayment']);
+
+    // Package Payment Routes
+    Route::post('/package/{package_id}/payment', [PackageBookingController::class, 'initiatePayment']);
+    Route::post('/package/{package_id}/confirm-payment', [PackageBookingController::class, 'confirmPayment']);
+
+    // Orders Routes (User can view their own orders)
+    Route::get('/user/orders', [OrderController::class, 'getOrders']);
+    Route::get('/user/orders/{order_id}', [OrderController::class, 'getOrderDetails']);
+
+    
 
     //  USER Routes (Only "user" role can access)
     Route::middleware(['role:user'])->group(function () {
