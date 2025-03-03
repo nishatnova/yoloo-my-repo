@@ -31,13 +31,18 @@ class TemplatePurchaseController extends Controller
                 'currency' => 'usd',
                 'automatic_payment_methods' => [
                     'enabled' => true,  
-                    'allow_redirects' => 'never', // Avoid redirects
+                    'allow_redirects' => 'never', 
                 ],
+                'metadata' => [
+                    'template_id' => $template->id, 
+                    'user_id' => Auth::id(),
+                ]
             ]);
             
 
             return $this->sendResponse([
-                'client_secret' => $paymentIntent->client_secret,
+                'payment_intent_id' => $paymentIntent->id,
+                'metadata' => $paymentIntent->metadata,
                 'template' => $template,
             ], 'Payment initiation successful.');
         } catch (\Exception $e) {
@@ -61,6 +66,8 @@ class TemplatePurchaseController extends Controller
             $paymentIntent = PaymentIntent::retrieve($validated['payment_intent_id']);
 
 
+            $metadata = $paymentIntent->metadata;
+
             $paymentIntent->confirm([
                 'payment_method' => $validated['payment_method_id'],
             ]);
@@ -72,12 +79,14 @@ class TemplatePurchaseController extends Controller
                 'status' => 'completed',
                 'service_booked' => 'Template', 
                 'stripe_payment_id' => $paymentIntent->id,
+                'metadata' => json_encode($metadata),
             ]);
 
             // Return success response
             return $this->sendResponse([
                 'order' => $order,
                 'message' => 'Payment successful. Your order has been placed.',
+                'metadata' => $metadata,
             ], 'Payment completed successfully.');
 
         } catch (\Exception $e) {

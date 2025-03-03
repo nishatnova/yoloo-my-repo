@@ -14,8 +14,13 @@ use App\Http\Controllers\API\JobApplicationController;
 use App\Http\Controllers\API\TemplatePurchaseController;
 use App\Http\Controllers\API\PackageBookingController;
 use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\StripeWebhookController;
 
+
+    Route::post('/webhook', [StripeWebhookController::class, 'handleWebhook']);
     Route::post('/register', [AuthController::class, 'register']);
+
+    
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
