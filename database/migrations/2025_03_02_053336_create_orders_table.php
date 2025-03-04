@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('template_id')->nullable()->constrained()->onDelete('cascade'); // Template
-            $table->foreignId('package_id')->nullable()->constrained()->onDelete('cascade'); // Package
+            $table->foreignId('template_id')->nullable()->constrained()->onDelete('cascade'); 
+            $table->foreignId('package_id')->nullable()->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending');
             $table->string('stripe_payment_id')->nullable();
-            $table->string('service_booked')->nullable(); // Add service booked (Template/Package)
+            $table->string('service_booked')->nullable(); 
+            $table->json('metadata')->nullable();
             $table->timestamps();
         });
     }

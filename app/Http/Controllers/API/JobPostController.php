@@ -9,6 +9,7 @@ use App\Models\JobPost;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Carbon\Carbon;
 
 class JobPostController extends Controller
 {
@@ -16,6 +17,11 @@ class JobPostController extends Controller
     public function index(Request $request)
     {
         try {
+
+            $expiredJobs = JobPost::where('status', 'Active')
+            ->where('application_deadline', '<', Carbon::now())
+            ->update(['status' => 'Inactive']);
+        
             $activeStatus = $request->query('status'); 
             $limit = $request->query('limit', 10); 
             $page = $request->query('page', 1); 
@@ -84,7 +90,7 @@ class JobPostController extends Controller
                 'location' => 'nullable|string',
                 'application_deadline' => 'nullable|date',
                 'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-                'status' => 'required',
+                'status' => 'required|in:Active,Inactive',
             ]);
 
             // Decode JSON fields to array
@@ -160,7 +166,7 @@ class JobPostController extends Controller
                 'location' => 'nullable|string',
                 'application_deadline' => 'nullable|date',
                 'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-                'status' => 'required',
+                'status' => 'required|in:Active,Inactive',
             ]);
 
             // Decode JSON fields to array if provided

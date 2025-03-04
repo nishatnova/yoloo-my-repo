@@ -18,8 +18,10 @@ class JobPost extends Model
         'responsibilities' => 'array',
         'requirements' => 'array',
         'application_deadline' => 'datetime',
+        'status' => 'string',
     ];
 
+    
     public function getCoverImageUrlAttribute()
     {
         return $this->cover_image ? Storage::url($this->cover_image) : null;

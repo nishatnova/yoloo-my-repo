@@ -11,7 +11,7 @@ class Package extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'location', 'about', 'estate_details',
+        'service_title', 'location', 'about', 'estate_details',
         'included_services', 'price', 'address', 'email', 'phone', 'capacity', 'cover_image', 'active_status'
     ];
 

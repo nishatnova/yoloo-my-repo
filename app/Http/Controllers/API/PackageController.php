@@ -49,8 +49,8 @@ class PackageController extends Controller
             $packages->getCollection()->transform(function ($package) {
                 return [
                     'id' => $package->id,
-                    'title' => $package->title,
                     'location' => $package->location,
+                    'service_title' => $package->service_title,
                     'about' => $package->about,
                     'estate_details' => $package->estate_details,
                     'included_services' => $package->included_services,
@@ -88,7 +88,7 @@ class PackageController extends Controller
         try {
             // Validate the incoming data
             $validated = $request->validate([
-                'title' => 'required|string',
+                'service_title' => 'required|string',
                 'location' => 'required|string',
                 'about' => 'nullable|string',
                 'estate_details' => 'required|string', // JSON string
@@ -126,7 +126,7 @@ class PackageController extends Controller
             // Return the created package with all details
             return $this->sendResponse([
                 'id' => $package->id,
-                'title' => $package->title,
+                'service_title' => $package->service_title,
                 'location' => $package->location,
                 'about' => $package->about,
                 'estate_details' => $package->estate_details, // Full estate details array
@@ -157,7 +157,7 @@ class PackageController extends Controller
 
             return $this->sendResponse([
                 'id' => $package->id,
-                'title' => $package->title,
+                'service_title' => $package->service_title,
                 'location' => $package->location,
                 'about' => $package->about,
                 'estate_details' => $package->estate_details,
@@ -187,7 +187,7 @@ class PackageController extends Controller
             }
 
             $validated = $request->validate([
-                'title' => 'required|string',
+                'service_title' => 'required|string',
                 'location' => 'required|string',
                 'about' => 'nullable|string',
                 'estate_details' => 'nullable|string', // Optional JSON string
@@ -234,7 +234,7 @@ class PackageController extends Controller
 
             return $this->sendResponse([
                 'id' => $package->id,
-                'title' => $package->title,
+                'service_title' => $package->service_title,
                 'location' => $package->location,
                 'about' => $package->about,
                 'estate_details' => $package->estate_details,
@@ -296,7 +296,7 @@ class PackageController extends Controller
             }
 
             // Search packages by title or location
-            $packages = Package::where('title', 'LIKE', "%$query%")
+            $packages = Package::where('service_title', 'LIKE', "%$query%")
                 ->orWhere('location', 'LIKE', "%$query%")
                 ->get();
 
@@ -309,7 +309,7 @@ class PackageController extends Controller
             $formattedPackages = $packages->map(function ($package) {
                 return [
                     'id' => $package->id,
-                    'title' => $package->title,
+                    'service_title' => $package->service_title,
                     'location' => $package->location,
                 ];
             });
@@ -337,12 +337,12 @@ class PackageController extends Controller
 
         // If both venue & location are provided
         if ($venue && $location) {
-            $query->where('title', 'LIKE', "%$venue%")
+            $query->where('service_title', 'LIKE', "%$venue%")
                   ->where('location', 'LIKE', "%$location%");
         } else {
             // If only venue is provided
             if ($venue) {
-                $query->where('title', 'LIKE', "%$venue%");
+                $query->where('service_title', 'LIKE', "%$venue%");
             }
 
             // If only location is provided
@@ -361,7 +361,7 @@ class PackageController extends Controller
         $formattedPackages = $packages->map(function ($package) {
             return [
                 'id' => $package->id,
-                'title' => $package->title,
+                'service_title' => $package->service_title,
                 'location' => $package->location,
                 'included_services' => $package->included_services,
                 'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null,

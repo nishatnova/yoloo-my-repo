@@ -69,6 +69,23 @@ class FaqController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        try {
+            $faq = FAQ::findOrFail($id);
+
+            return $this->sendResponse([
+                'id' => $faq->id,
+                'question' => $faq->question,
+                'answer' => $faq->answer,
+                'active_status' => $faq->active_status,
+            ], 'FAQ retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving FAQ: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+
 
     //FAQ Update
 

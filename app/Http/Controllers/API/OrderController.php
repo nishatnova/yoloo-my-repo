@@ -29,17 +29,13 @@ class OrderController extends Controller
             }
     
             $formattedOrders = $orders->map(function ($order) {
+                $order->metadata = json_decode($order->metadata); 
                 return [
                     'order_id' => $order->id,
                     'service_booked' => $order->service_booked,
-                    'amount' => $order->amount,
-                    'status' => $order->status,
-                    'payment_id' => $order->stripe_payment_id,
                     'booking_date' => $order->created_at->format('Y-m-d H:i:s'),
-                    'user' => [
-                        'name' => $order->user->name, 
-                        'email' => $order->user->email, 
-                    ],
+                    'status' => $order->status,
+                    'amount' => $order->amount,
                 ];
             });
     
@@ -63,17 +59,19 @@ class OrderController extends Controller
 
             // Format orders with user information
             $formattedOrders = $orders->map(function ($order) {
+                $order->metadata = json_decode($order->metadata); // Decode the metadata
                 return [
                     'order_id' => $order->id,
-                    'service_booked' => $order->service_booked,
+                    'customer_name' => $order->user->name,
                     'amount' => $order->amount,
                     'status' => $order->status,
-                    'payment_id' => $order->stripe_payment_id,
                     'booking_date' => $order->created_at->format('Y-m-d H:i:s'),
-                    'user' => [
-                        'name' => $order->user->name, 
-                        'email' => $order->user->email, 
-                    ],
+                    'service_booked' => $order->service_booked,
+                    'payment_id' => $order->stripe_payment_id,
+                    // 'user' => [
+                    //     'name' => $order->user->name, 
+                    //     'email' => $order->user->email, 
+                    // ],
                 ];
             });
 

@@ -22,7 +22,7 @@ return new class extends Migration
             $table->json('requirements')->nullable(); 
             $table->dateTime('application_deadline')->nullable(); 
             $table->string('cover_image')->nullable(); 
-            $table->tinyInteger('status')->default(1)->nullable();
+            $table->string('status')->default('Active')->nullable();
             $table->timestamps();
         });
     }

@@ -18,6 +18,7 @@ class TemplatePurchaseController extends Controller
     {
         try {
             $template = Template::findOrFail($template_id);
+            $user = Auth::user();
 
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -35,7 +36,10 @@ class TemplatePurchaseController extends Controller
                 ],
                 'metadata' => [
                     'template_id' => $template->id, 
-                    'user_id' => Auth::id(),
+                    'template_title' => $template->title, 
+                    'user_id' => $user->id,   
+                    'user_name' => $user->name,
+                    'user_email' => $user->email,
                 ]
             ]);
             
@@ -84,9 +88,14 @@ class TemplatePurchaseController extends Controller
 
             // Return success response
             return $this->sendResponse([
-                'order' => $order,
+                'transaction_id' => $paymentIntent->id,
+                'amount' => $paymentIntent->amount_received / 100, 
+                'date' => date('m/d/Y', $paymentIntent->created), 
+                'time' => date('H:i:s', $paymentIntent->created), 
+                'payment_method' => $paymentIntent->payment_method_types[0], 
+                'product' => $metadata['template_title'], 
+                'Customer' => $metadata['user_name'], 
                 'message' => 'Payment successful. Your order has been placed.',
-                'metadata' => $metadata,
             ], 'Payment completed successfully.');
 
         } catch (\Exception $e) {

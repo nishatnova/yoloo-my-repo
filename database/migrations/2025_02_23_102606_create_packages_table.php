@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('packages', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
             $table->string('location');
+            $table->string('service_title');
             $table->text('about')->nullable();
             $table->json('estate_details'); // Store array of objects [{title, description}]
             $table->json('included_services'); // Store array ["Photography", "Catering"]

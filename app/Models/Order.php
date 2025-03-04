@@ -10,8 +10,18 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'template_id', 'package_id', 'amount', 'status', 'stripe_payment_id', 'service_booked'
+        'user_id', 'template_id', 'package_id', 'amount', 'status', 'stripe_payment_id', 'service_booked', 'metadata',
     ];
+
+    protected $casts = [
+        'metadata' => 'array', 
+        'created_at' => 'datetime', 
+    ];
+
+    public function getOrderDateAttribute()
+    {
+        return $this->created_at->format('Y-m-d H:i:s'); 
+    }
 
     public function user()
     {
