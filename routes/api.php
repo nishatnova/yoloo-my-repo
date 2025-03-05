@@ -15,6 +15,7 @@ use App\Http\Controllers\API\TemplatePurchaseController;
 use App\Http\Controllers\API\PackageBookingController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\StripeWebhookController;
+use App\Http\Controllers\API\PackageInquiryController;
 
 
     Route::post('/webhook', [StripeWebhookController::class, 'handleWebhook']);
@@ -35,6 +36,10 @@ use App\Http\Controllers\API\StripeWebhookController;
     Route::get('/templates', [TemplateController::class, 'index']);
     Route::get('/faqs', [FaqController::class, 'index']);
     Route::get('/faqs/{id}', [FaqController::class, 'show']);
+
+    Route::get('/events', [PackageInquiryController::class, 'getCompletedPackageInquiries']);
+    Route::get('/events/{id}', [PackageInquiryController::class, 'showDetail']);
+    Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
 
     Route::get('/search', [PackageController::class, 'search']);
     Route::get('/packages/search', [PackageController::class, 'searchPackagePage']);

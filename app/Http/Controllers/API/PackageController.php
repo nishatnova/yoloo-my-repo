@@ -18,13 +18,8 @@ class PackageController extends Controller
     {
         try {
             $activeStatus = $request->query('active_status'); 
-            $limit = $request->query('limit', 10); // Default limit is 10
-            $page = $request->query('page', 1); // Default page is 1
-            // $title = $request->query('title'); 
-            // $location = $request->query('location'); 
-            // $priceMin = $request->query('price_min'); 
-            // $priceMax = $request->query('price_max'); 
-           
+            $limit = $request->query('limit', 10); 
+            $page = $request->query('page', 1);  
 
             $query = Package::with('images');
 

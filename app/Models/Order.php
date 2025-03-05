@@ -10,7 +10,7 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'template_id', 'package_id', 'amount', 'status', 'stripe_payment_id', 'service_booked', 'metadata',
+        'user_id', 'template_id', 'package_id', 'package_inquiry_id', 'amount', 'status', 'stripe_payment_id', 'service_booked', 'metadata',
     ];
 
     protected $casts = [
@@ -37,4 +37,12 @@ class Order extends Model
     {
         return $this->belongsTo(Package::class);
     }
+
+    public function packageInquiry()
+    {
+        return $this->belongsTo(PackageInquiry::class);
+    }
+
+
+    
 }

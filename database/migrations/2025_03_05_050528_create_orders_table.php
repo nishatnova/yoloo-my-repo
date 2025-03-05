@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('template_id')->nullable()->constrained()->onDelete('cascade'); 
             $table->foreignId('package_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('package_inquiry_id')->nullable()->constrained('package_inquiries')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending');
             $table->string('stripe_payment_id')->nullable();

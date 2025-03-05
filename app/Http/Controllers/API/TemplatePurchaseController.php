@@ -80,7 +80,7 @@ class TemplatePurchaseController extends Controller
                 'user_id' => Auth::id(),
                 'template_id' => $template_id,
                 'amount' => $paymentIntent->amount_received / 100, 
-                'status' => 'completed',
+                'status' => 'Completed',
                 'service_booked' => 'Template', 
                 'stripe_payment_id' => $paymentIntent->id,
                 'metadata' => json_encode($metadata),
@@ -88,14 +88,15 @@ class TemplatePurchaseController extends Controller
 
             // Return success response
             return $this->sendResponse([
+                'user_id' => Auth::id(),
+                'template_id' => $template_id,
                 'transaction_id' => $paymentIntent->id,
                 'amount' => $paymentIntent->amount_received / 100, 
                 'date' => date('m/d/Y', $paymentIntent->created), 
                 'time' => date('H:i:s', $paymentIntent->created), 
                 'payment_method' => $paymentIntent->payment_method_types[0], 
                 'product' => $metadata['template_title'], 
-                'Customer' => $metadata['user_name'], 
-                'message' => 'Payment successful. Your order has been placed.',
+                'customer' => $metadata['user_name'], 
             ], 'Payment completed successfully.');
 
         } catch (\Exception $e) {

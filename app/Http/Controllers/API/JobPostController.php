@@ -44,6 +44,7 @@ class JobPostController extends Controller
             // Transform results to include image URLs
             $jobs->getCollection()->transform(function ($job) {
                 return [
+                    'id' => $job->id,
                     'Job ID' => $job->id,
                     'Location' => $job->location,
                     'Job Title' => $job->job_title,                   
@@ -89,7 +90,7 @@ class JobPostController extends Controller
                 'budget' => 'required|numeric|min:0',
                 'location' => 'nullable|string',
                 'application_deadline' => 'nullable|date',
-                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
                 'status' => 'required|in:Active,Inactive',
             ]);
 
@@ -165,7 +166,7 @@ class JobPostController extends Controller
                 'budget' => 'required|numeric|min:0',
                 'location' => 'nullable|string',
                 'application_deadline' => 'nullable|date',
-                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:max:10240',
                 'status' => 'required|in:Active,Inactive',
             ]);
 
