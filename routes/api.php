@@ -16,6 +16,7 @@ use App\Http\Controllers\API\PackageBookingController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\StripeWebhookController;
 use App\Http\Controllers\API\PackageInquiryController;
+use App\Http\Controllers\API\CustomTemplateContentController;
 
 
     Route::post('/webhook', [StripeWebhookController::class, 'handleWebhook']);
@@ -39,7 +40,7 @@ use App\Http\Controllers\API\PackageInquiryController;
 
     Route::get('/events', [PackageInquiryController::class, 'getCompletedPackageInquiries']);
     Route::get('/events/{id}', [PackageInquiryController::class, 'showDetail']);
-    Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
+    
 
     Route::get('/search', [PackageController::class, 'search']);
     Route::get('/packages/search', [PackageController::class, 'searchPackagePage']);
@@ -70,10 +71,16 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::get('/orders', [OrderController::class, 'getAllOrders']);
     Route::get('/orders/{order_id}', [OrderController::class, 'getOrderDetails']);
 
+    Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
+    
+    Route::post('/template/{template_id}/update-custom-content', [CustomTemplateContentController::class, 'updateCustomContent']);
+
+
     
 
     //  USER Routes (Only "user" role can access)
     Route::middleware(['role:user'])->group(function () {
+
         
     });
 
@@ -105,6 +112,7 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
 
         Route::post('/job-applications/status/{id}', [JobApplicationController::class, 'updateApplicationStatus']);
         Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
+        Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
         
     });
 
