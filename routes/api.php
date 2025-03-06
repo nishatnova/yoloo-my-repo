@@ -17,6 +17,7 @@ use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\StripeWebhookController;
 use App\Http\Controllers\API\PackageInquiryController;
 use App\Http\Controllers\API\CustomTemplateContentController;
+use App\Http\Controllers\API\RSVPController;
 
 
     Route::post('/webhook', [StripeWebhookController::class, 'handleWebhook']);
@@ -53,6 +54,14 @@ use App\Http\Controllers\API\CustomTemplateContentController;
 
     Route::post('/contact-us', [ContactController::class, 'store']);
 
+    Route::get('/template/{order_id}/{template_id}/preview-custom-template', [CustomTemplateContentController::class, 'previewCustomTemplate']);
+
+    Route::post('/template/{order_id}/{template_id}/rsvp', [RSVPController::class, 'submitRSVP']);
+
+    Route::get('/template/{order_id}/rsvp-list', [RSVPController::class, 'getRSVPList']);
+    Route::get('/rsvp/{rsvp_id}', [RSVPController::class, 'getRSVPDetails']);
+
+
 
 Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -74,7 +83,8 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
     
     Route::post('/template/{template_id}/update-custom-content', [CustomTemplateContentController::class, 'updateCustomContent']);
-    Route::get('/template/{template_id}/preview-custom-template', [CustomTemplateContentController::class, 'previewCustomTemplate']);
+
+    
 
 
     

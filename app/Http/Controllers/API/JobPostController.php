@@ -166,7 +166,7 @@ class JobPostController extends Controller
                 'budget' => 'required|numeric|min:0',
                 'location' => 'nullable|string',
                 'application_deadline' => 'nullable|date',
-                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:max:10240',
+                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
                 'status' => 'required|in:Active,Inactive',
             ]);
 

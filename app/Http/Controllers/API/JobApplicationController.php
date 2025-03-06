@@ -75,7 +75,8 @@ class JobApplicationController extends Controller
 
         $applications->getCollection()->transform(function ($application) {
             return [
-                'Application ID' => $application->id,
+                'application_id' => $application->id,
+                'id' => $application->id,
                 'Staff Name' => $application->applicant_name,
                 'Job Title' => optional($application->jobPost)->job_title,
                 'Status' => $application->status,

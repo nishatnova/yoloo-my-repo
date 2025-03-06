@@ -83,16 +83,24 @@ class CustomTemplateContentController extends Controller
         }
     }
 
-    public function previewCustomTemplate(Request $request, $template_id)
+    public function previewCustomTemplate(Request $request, $order_id, $template_id)
     {
         try {
-            // Fetch the user's order for the given template
-            $order = Order::where('user_id', Auth::id())
-                        ->where('template_id', $template_id)
-                        ->firstOrFail();
+            // For authenticated user (optional)
+            if (Auth::check()) {
+                // Get the user's order for the given template_id
+                $order = Order::where('user_id', Auth::id())
+                            ->where('id', $order_id)
+                            ->where('template_id', $template_id)
+                            ->first();
 
-            // Retrieve the custom template content
-            $customContent = CustomTemplateContent::where('order_id', $order->id)
+                if (!$order) {
+                    return $this->sendError('You have not purchased this template or the order does not exist.', [], 403);
+                }
+            }
+
+            // Retrieve the custom content for the template using both order_id and template_id
+            $customContent = CustomTemplateContent::where('order_id', $order_id)
                                                 ->where('template_id', $template_id)
                                                 ->first();
 
@@ -100,7 +108,7 @@ class CustomTemplateContentController extends Controller
                 return $this->sendError('Custom content not found. Please update the content first.', [], 404);
             }
 
-            // Ensure that the date fields are formatted correctly
+            // Prepare the preview data
             $previewData = [
                 'welcome_message' => $customContent->welcome_message,
                 'description' => $customContent->description,
@@ -112,6 +120,8 @@ class CustomTemplateContentController extends Controller
                 'wedding_date' => Carbon::parse($customContent->wedding_date)->format('Y-m-d'),
                 'wedding_time' => $customContent->wedding_time,
                 'city' => $customContent->city,
+                'order_id' => $customContent->order_id,
+                'template_id' => $customContent->template_id,
             ];
 
             // Return the preview response
