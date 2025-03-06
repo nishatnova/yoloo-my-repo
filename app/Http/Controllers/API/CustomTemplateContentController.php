@@ -8,6 +8,7 @@ use App\Traits\ResponseTrait;
 use App\Models\Order;
 use App\Models\CustomTemplateContent;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class CustomTemplateContentController extends Controller
@@ -79,6 +80,45 @@ class CustomTemplateContentController extends Controller
 
         } catch (\Exception $e) {
             return $this->sendError('Error saving or updating custom template content: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+    public function previewCustomTemplate(Request $request, $template_id)
+    {
+        try {
+            // Fetch the user's order for the given template
+            $order = Order::where('user_id', Auth::id())
+                        ->where('template_id', $template_id)
+                        ->firstOrFail();
+
+            // Retrieve the custom template content
+            $customContent = CustomTemplateContent::where('order_id', $order->id)
+                                                ->where('template_id', $template_id)
+                                                ->first();
+
+            if (!$customContent) {
+                return $this->sendError('Custom content not found. Please update the content first.', [], 404);
+            }
+
+            // Ensure that the date fields are formatted correctly
+            $previewData = [
+                'welcome_message' => $customContent->welcome_message,
+                'description' => $customContent->description,
+                'rsvp_date' => Carbon::parse($customContent->rsvp_date)->format('Y-m-d H:i:s'),
+                'personal_name' => $customContent->personal_name,
+                'partner_name' => $customContent->partner_name,
+                'venue_name' => $customContent->venue_name,
+                'venue_address' => $customContent->venue_address,
+                'wedding_date' => Carbon::parse($customContent->wedding_date)->format('Y-m-d'),
+                'wedding_time' => $customContent->wedding_time,
+                'city' => $customContent->city,
+            ];
+
+            // Return the preview response
+            return $this->sendResponse($previewData, 'Template preview retrieved successfully.');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error fetching template preview: ' . $e->getMessage(), [], 500);
         }
     }
 

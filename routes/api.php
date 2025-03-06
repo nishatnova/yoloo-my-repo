@@ -74,6 +74,7 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
     
     Route::post('/template/{template_id}/update-custom-content', [CustomTemplateContentController::class, 'updateCustomContent']);
+    Route::get('/template/{template_id}/preview-custom-template', [CustomTemplateContentController::class, 'previewCustomTemplate']);
 
 
     
