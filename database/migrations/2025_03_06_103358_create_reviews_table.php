@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('rating', 2, 1);
             $table->longText('comment');
             $table->string('status')->default('InActive')->nullable();
+            $table->string('home_status')->default('InActive')->nullable();
             $table->timestamps();
         });
     }

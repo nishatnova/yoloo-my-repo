@@ -18,6 +18,7 @@ class ReviewController extends Controller
                 'rating' => 'required|numeric|between:0,5',
                 'comment' => 'required|string',
                 'status' => 'required|in:Active,Inactive', 
+                'home_status' => 'required|in:Active,Inactive', 
             ]);
     
             // Check if the package exists
@@ -55,6 +56,7 @@ class ReviewController extends Controller
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
                 'status' => $validated['status'],
+                'home_status' => $validated['home_status'],
             ]);
     
             return $this->sendResponse($review, 'Review submitted successfully.');
