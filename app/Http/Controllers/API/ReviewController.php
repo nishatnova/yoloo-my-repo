@@ -50,6 +50,7 @@ class ReviewController extends Controller
             $review = Review::create([
                 'user_id' => Auth::id(),
                 'package_id' => $package_id,
+                'order_id' => $order->id
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
             ]);
