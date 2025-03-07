@@ -18,6 +18,7 @@ use App\Http\Controllers\API\StripeWebhookController;
 use App\Http\Controllers\API\PackageInquiryController;
 use App\Http\Controllers\API\CustomTemplateContentController;
 use App\Http\Controllers\API\RSVPController;
+use App\Http\Controllers\API\ReviewController;
 
 
     Route::post('/webhook', [StripeWebhookController::class, 'handleWebhook']);
@@ -48,6 +49,7 @@ use App\Http\Controllers\API\RSVPController;
 
     Route::get('/packages', [PackageController::class, 'index']);
     Route::get('/packages/{id}', [PackageController::class, 'show']);
+    Route::get('/packages/{id}/show-review', [ReviewController::class, 'reviewShow']);
 
     Route::get('/job-posts', [JobPostController::class, 'index']);
     Route::get('/job-posts/{id}', [JobPostController::class, 'show']);

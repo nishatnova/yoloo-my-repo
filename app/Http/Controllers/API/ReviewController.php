@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Traits\ResponseTrait;
 use App\Models\Review;
+use App\Models\Package;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -169,6 +171,30 @@ class ReviewController extends Controller
             return $this->sendError('Error retrieving review details: ' . $e->getMessage(), [], 500);
         }
     }
+
+
+    public function reviewShow($id)
+    {
+        try {
+            $package = Package::findOrFail($id);
+
+            // Check if the logged-in user has purchased this package
+            $userHasPurchased = false;
+
+            if (Auth::check()) {
+                $userHasPurchased = Order::where('user_id', Auth::id())
+                                        ->where('package_id', $id)
+                                        ->exists();
+            }
+
+            return $this->sendResponse([
+                'success' => $userHasPurchased,
+            ], 'Package retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
+        }
+    }
+
 
     
 
