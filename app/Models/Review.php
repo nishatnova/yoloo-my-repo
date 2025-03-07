@@ -11,7 +11,6 @@ class Review extends Model
 
     protected $fillable = ['order_id', 'user_id', 'package_id', 'rating', 'comment'];
 
-    // Relationships
     public function order()
     {
         return $this->belongsTo(Order::class);
