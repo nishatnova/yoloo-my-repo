@@ -17,7 +17,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade')->nullable();
             $table->foreignId('package_id')->constrained('packages')->onDelete('cascade')->nullable();
             $table->decimal('rating', 2, 1);
-            $table->text('comment');
+            $table->longText('comment');
+            $table->string('status')->default('InActive')->nullable();
             $table->timestamps();
         });
     }

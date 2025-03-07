@@ -16,7 +16,8 @@ class ReviewController extends Controller
         try {
             $validated = $request->validate([
                 'rating' => 'required|numeric|between:0,5',
-                'comment' => 'required|string|max:1000', 
+                'comment' => 'required|string',
+                'status' => 'required|in:Active,Inactive', 
             ]);
     
             // Check if the package exists
@@ -53,6 +54,7 @@ class ReviewController extends Controller
                 'order_id' => $order->id
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
+                'status' => $validated['status'],
             ]);
     
             return $this->sendResponse($review, 'Review submitted successfully.');
@@ -63,6 +65,8 @@ class ReviewController extends Controller
             return $this->sendError('Error submitting or updating review: ' . $e->getMessage(), [], 500);
         }
     }
+
+
     
 
     
