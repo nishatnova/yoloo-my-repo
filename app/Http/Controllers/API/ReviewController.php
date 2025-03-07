@@ -144,6 +144,32 @@ class ReviewController extends Controller
             return $this->sendError('Error retrieving top 3 highest rated active reviews: ' . $e->getMessage(), [], 500);
         }
     }
+
+
+    public function getReviewDetails($review_id)
+    {
+        try {
+            $review = Review::with(['user', 'package', 'order'])
+                            ->findOrFail($review_id);
+
+            return $this->sendResponse([
+                'id' => $review->id,
+                'user_name' => $review->user->name,
+                'package_name' => $review->package->service_title,
+                'rating' => $review->rating,
+                'comment' => $review->comment,
+                'status' => $review->status,
+                'home_status' => $review->home_status,
+                'created_at' => $review->created_at->format('d M, Y h:i A'),
+                'updated_at' => $review->updated_at->format('d M, Y h:i A'),
+            ], 'Review details retrieved successfully.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->sendError('Review not found.', [], 404);
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving review details: ' . $e->getMessage(), [], 500);
+        }
+    }
+
     
 
 
