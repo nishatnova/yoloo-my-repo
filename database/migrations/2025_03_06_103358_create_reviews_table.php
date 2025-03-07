@@ -18,8 +18,8 @@ return new class extends Migration
             $table->foreignId('package_id')->constrained('packages')->onDelete('cascade')->nullable();
             $table->decimal('rating', 2, 1);
             $table->longText('comment');
-            $table->string('status')->default('InActive')->nullable();
-            $table->string('home_status')->default('InActive')->nullable();
+            $table->tinyInteger('status')->default(0)->nullable();
+            $table->tinyInteger('home_status')->default(0)->nullable();
             $table->timestamps();
         });
     }

@@ -17,8 +17,8 @@ class ReviewController extends Controller
             $validated = $request->validate([
                 'rating' => 'required|numeric|between:0,5',
                 'comment' => 'required|string',
-                'status' => 'required|in:Active,Inactive', 
-                'home_status' => 'required|in:Active,Inactive', 
+                'status' => 'required', 
+                'home_status' => 'required', 
             ]);
     
             // Check if the package exists

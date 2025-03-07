@@ -11,10 +11,10 @@ class Review extends Model
 
     protected $fillable = ['order_id', 'user_id', 'package_id', 'rating', 'comment', 'status', 'home_status'];
 
-    protected $casts = [
-        'status' => 'string',
-        'home_status' => 'string',
-    ];
+    // protected $casts = [
+    //     'status' => 'string',
+    //     'home_status' => 'string',
+    // ];
 
     public function order()
     {
