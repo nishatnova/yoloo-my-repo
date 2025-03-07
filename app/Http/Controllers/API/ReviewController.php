@@ -87,7 +87,7 @@ class ReviewController extends Controller
             }
 
             $reviews = $query->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
-            
+
             $reviews->getCollection()->transform(function ($review) {
                 return [
                     'id' => $review->id,
@@ -113,6 +113,39 @@ class ReviewController extends Controller
             return $this->sendError('Error retrieving reviews: ' . $e->getMessage(), [], 500);
         }
     }
+
+    public function getPackageReviews($package_id)
+    {
+        try {
+            $reviews = Review::with(['user', 'package', 'order'])
+                            ->where('package_id', $package_id)
+                            ->where('status', 1)
+                            ->orderBy('rating', 'desc') 
+                            ->take(3) // Limit to the top 3 highest rated reviews
+                            ->get(); 
+    
+            $reviews->transform(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'user_name' => $review->user->name,
+                    'package_name' => $review->package->service_title,
+                    'rating' => $review->rating,
+                    'comment' => $review->comment,
+                    'status' => $review->status,
+                    'home_status' => $review->home_status,
+                    'created_at' => $review->created_at->format('d M, Y h:i A'),
+                ];
+            });
+    
+            return $this->sendResponse([
+                'reviews' => $reviews,
+            ], 'Top 3 highest rated active reviews for the package retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving top 3 highest rated active reviews: ' . $e->getMessage(), [], 500);
+        }
+    }
+    
+
 
 
 
