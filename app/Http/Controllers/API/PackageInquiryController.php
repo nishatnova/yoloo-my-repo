@@ -14,7 +14,7 @@ class PackageInquiryController extends Controller
     {
         try {
             // Fetch package inquiries where the associated order status is 'completed'
-            $inquiries = PackageInquiry::with(['package', 'user', 'order']) // Eager load related models
+            $inquiries = PackageInquiry::with(['package', 'user', 'order']) 
                 ->whereHas('order', function ($query) {
                     $query->where('status', 'Completed'); 
                 })
@@ -24,7 +24,6 @@ class PackageInquiryController extends Controller
                 return $this->sendError('No completed package inquiries found.', [], 404);
             }
 
-            // Format the inquiries with necessary details
             $formattedInquiries = $inquiries->map(function ($inquiry) {
                 return [
                     'event_id' => $inquiry->id,
@@ -48,11 +47,9 @@ class PackageInquiryController extends Controller
     public function showDetail($inquiry_id)
     {
         try {
-            // Find the package inquiry by its ID
             $inquiry = PackageInquiry::with(['package', 'user', 'order'])
                 ->findOrFail($inquiry_id);
 
-            // Format the inquiry details
             $inquiryDetails = [
                 'event_id' => $inquiry->id,
                 'customer' => $inquiry->name,
@@ -75,16 +72,14 @@ class PackageInquiryController extends Controller
         }
     }
 
-    // Method to update status in PackageInquiry
     public function updateStatus(Request $request, $inquiry_id)
     {
         try {
-            // Validate the incoming status data
             $validated = $request->validate([
-                'status' => 'required|string|in:Pending,Active,Completed,Cancel', // Ensure status is one of the predefined options
+                'status' => 'required|string|in:Pending,Active,Completed,Cancel', 
             ]);
 
-            // Find the inquiry and update status
+            
             $inquiry = PackageInquiry::findOrFail($inquiry_id);
             $inquiry->status = $validated['status'];
             $inquiry->save();

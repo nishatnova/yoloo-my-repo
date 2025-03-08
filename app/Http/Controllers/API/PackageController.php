@@ -93,9 +93,9 @@ class PackageController extends Controller
                 'email' => 'nullable|email',
                 'phone' => 'nullable|string',
                 'capacity' => 'nullable|integer',
-                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
                 'venue_images' => 'nullable|array',
-                'venue_images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+                'venue_images.*' => 'image|mimes:jpeg,png,jpg|max:10240',
                 'active_status' => 'required',
             ]);
 
@@ -192,9 +192,9 @@ class PackageController extends Controller
                 'email' => 'nullable|email',
                 'phone' => 'nullable|string',
                 'capacity' => 'nullable|integer',
-                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
                 'venue_images' => 'nullable|array',
-                'venue_images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+                'venue_images.*' => 'image|mimes:jpeg,png,jpg|max:10240',
                 'active_status' => 'required',
             ]);
 
@@ -206,17 +206,14 @@ class PackageController extends Controller
                 $validated['included_services'] = json_decode($validated['included_services'], true);
             }
 
-            // Find the package
             $package = Package::findOrFail($id);
 
-            // **Fix Cover Image Issue**
             if ($request->hasFile('cover_image')) {
-                // Store new image and update path correctly
+                
                 $coverImagePath = $request->file('cover_image')->store('packages', 'public');
-                $validated['cover_image'] = $coverImagePath; // Add to validated array
+                $validated['cover_image'] = $coverImagePath;
             }
 
-            // Update package
             $package->update($validated);
 
             // Store venue photos if provided

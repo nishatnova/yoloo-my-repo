@@ -20,8 +20,6 @@ class ReviewController extends Controller
             $validated = $request->validate([
                 'rating' => 'required|numeric|between:0,5',
                 'comment' => 'required|string',
-                'status' => 'required', 
-                'home_status' => 'nullable', 
             ]);
     
             // Check if the package exists
@@ -54,12 +52,11 @@ class ReviewController extends Controller
             // If no review exists, create a new one
             $review = Review::create([
                 'user_id' => Auth::id(),
-                'package_id' => $package_id,
+                'package_id' => $package->id,
                 'order_id' => $order->id,
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
-                'status' => $validated['status'],
-                'home_status' => $validated['home_status'],
+                
             ]);
     
             return $this->sendResponse($review, 'Review submitted successfully.');
@@ -198,31 +195,31 @@ class ReviewController extends Controller
     }
 
     public function reviewShow($id)
-{
-    try {
-        
-        $package = Package::findOrFail($id); 
+    {
+        try {
+            
+            $package = Package::findOrFail($id); 
 
-        $userHasPurchased = false;
+            $userHasPurchased = false;
 
-        if (Auth::check()) {
-            $userHasPurchased = Order::where('user_id', Auth::id())
-                                     ->where('package_id', $id)
-                                     ->exists();
+            if (Auth::check()) {
+                $userHasPurchased = Order::where('user_id', Auth::id())
+                                        ->where('package_id', $id)
+                                        ->exists();
+            }
+
+            return $this->sendResponse([
+                'success' => $userHasPurchased,
+            ], 'Package retrieved successfully.');
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->sendError('User did not purchased this Package.', [], 404);
+        } catch (\Illuminate\Auth\AuthenticationException $e) {
+            return $this->sendError('User is not authenticated.', [], 401);
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
         }
-
-        return $this->sendResponse([
-            'success' => $userHasPurchased,
-        ], 'Package retrieved successfully.');
-
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        return $this->sendError('User did not purchaseed this Package.', [], 404);
-    } catch (\Illuminate\Auth\AuthenticationException $e) {
-        return $this->sendError('User is not authenticated.', [], 401);
-    } catch (\Exception $e) {
-        return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
     }
-}
 
 
 

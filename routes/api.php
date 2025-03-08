@@ -49,7 +49,11 @@ use App\Http\Controllers\API\ReviewController;
 
     Route::get('/packages', [PackageController::class, 'index']);
     Route::get('/packages/{id}', [PackageController::class, 'show']);
+
     Route::get('/packages/{id}/show-review', [ReviewController::class, 'reviewShow']);
+    Route::get('/package-reviews/{package_id}', [ReviewController::class, 'getPackageReviews']);
+    Route::get('/reviews', [ReviewController::class, 'getAllReviews']);
+    Route::get('/reviews/{review_id}', [ReviewController::class, 'getReviewDetails']);
 
     Route::get('/job-posts', [JobPostController::class, 'index']);
     Route::get('/job-posts/{id}', [JobPostController::class, 'show']);
@@ -87,7 +91,9 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/template/{template_id}/update-custom-content', [CustomTemplateContentController::class, 'updateCustomContent']);
 
     
-
+    Route::post('/add-review/{package_id}', [ReviewController::class, 'storeReview']);
+    
+    
 
     
 
@@ -126,6 +132,8 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('/job-applications/status/{id}', [JobApplicationController::class, 'updateApplicationStatus']);
         Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
         Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
+
+        Route::post('/reviews/{review_id}/update-status', [ReviewController::class, 'updateStatus']);
         
     });
 
