@@ -45,7 +45,12 @@ class PackageController extends Controller
                     'phone' => $package->phone,
                     'capacity' => $package->capacity,
                     'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null, 
-                    'venue_photos' => $package->images->map(fn ($image) => asset('storage/' . $image->image_path)),
+                    'venue_photos' => $package->images->map(function ($image) {
+                    return [
+                        'image_id' => $image->id, // Add the image ID
+                        'image_url' => asset('storage/' . $image->image_path), // Add the image URL
+                    ];
+                }),
                     'active_status' => $package->active_status,
                 ];
             });
