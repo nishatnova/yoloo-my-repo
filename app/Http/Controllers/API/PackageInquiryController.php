@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\PackageInquiry;
+use App\Models\JobApplication;
+use App\Models\PackageInquireStaff;
 use App\Traits\ResponseTrait;
 use Illuminate\Http\Request;
 
@@ -89,6 +91,49 @@ class PackageInquiryController extends Controller
             ], 'Status updated successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Error updating package inquiry status: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+    // Assign job application staff to a package inquiry
+    public function assignStaffToInquiry(Request $request, $inquiry_id)
+    {
+        try {
+            // Validate the incoming data
+            $validated = $request->validate([
+                'photographer_application_id' => 'nullable|exists:job_applications,id',
+                'decorator_application_id' => 'nullable|exists:job_applications,id',
+                'catering_application_id' => 'nullable|exists:job_applications,id',
+            ]);
+
+            // Fetch the package inquiry (event)
+            $inquiry = PackageInquiry::findOrFail($inquiry_id);
+
+            // Check if the job applications are approved for the respective roles (photographer, decorator, catering)
+            $photographerApplication = JobApplication::where('status', 'Approved')
+                ->where('id', $validated['photographer_application_id'] ?? null)
+                ->first();
+
+            $decoratorApplication = JobApplication::where('status', 'Approved')
+                ->where('id', $validated['decorator_application_id'] ?? null)
+                ->first();
+
+            $cateringApplication = JobApplication::where('status', 'Approved')
+                ->where('id', $validated['catering_application_id'] ?? null)
+                ->first();
+
+            // Assign the staff based on the job application IDs
+            $staffAssignment = PackageInquireStaff::create([
+                'package_inquiry_id' => $inquiry->id,
+                'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
+                'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
+                'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
+            ]);
+
+            // Return response
+            return $this->sendResponse($staffAssignment, 'Staff assigned to event successfully.');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error assigning staff: ' . $e->getMessage(), [], 500);
         }
     }
 
