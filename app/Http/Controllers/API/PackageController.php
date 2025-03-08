@@ -119,7 +119,7 @@ class PackageController extends Controller
                 'service_title' => $package->service_title,
                 'location' => $package->location,
                 'about' => $package->about,
-                'estate_details' => $package->estate_details, // Full estate details array
+                'estate_details' => $package->estate_details, 
                 'included_services' => $package->included_services,
                 'price' => $package->price,
                 'address' => $package->address,
@@ -127,7 +127,12 @@ class PackageController extends Controller
                 'phone' => $package->phone,
                 'capacity' => $package->capacity,
                 'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null,
-                'venue_images' => $package->images->map(fn ($image) => asset('storage/' . $image->image_path)) ,
+                'venue_photos' => $package->images->map(function ($image) {
+                    return [
+                        'image_id' => $image->id, 
+                        'image_url' => asset('storage/' . $image->image_path), 
+                    ];
+                }),
                 'active_status' => $package->active_status,
             ], 'Package created successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -141,30 +146,42 @@ class PackageController extends Controller
      * Show a specific package
      */
     public function show($id)
-    {
-        try {
-            $package = Package::with('images')->findOrFail($id);
+{
+    try {
+        // Try to find the package along with its images
+        $package = Package::with('images')->findOrFail($id);
 
-            return $this->sendResponse([
-                'id' => $package->id,
-                'service_title' => $package->service_title,
-                'location' => $package->location,
-                'about' => $package->about,
-                'estate_details' => $package->estate_details,
-                'included_services' => $package->included_services,
-                'price' => $package->price,
-                'address' => $package->address,
-                'email' => $package->email,
-                'phone' => $package->phone,
-                'capacity' => $package->capacity,
-                'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null, 
-                'venue_images' => $package->images->map(fn ($image) => asset('storage/' . $image->image_path)),
-                'active_status' => $package->active_status,
-            ], 'Package retrieved successfully.');
-        } catch (\Exception $e) {
-            return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
-        }
+        // Prepare and return the response if package is found
+        return $this->sendResponse([
+            'id' => $package->id,
+            'service_title' => $package->service_title,
+            'location' => $package->location,
+            'about' => $package->about,
+            'estate_details' => $package->estate_details,
+            'included_services' => $package->included_services,
+            'price' => $package->price,
+            'address' => $package->address,
+            'email' => $package->email,
+            'phone' => $package->phone,
+            'capacity' => $package->capacity,
+            'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null, 
+            'venue_photos' => $package->images->map(function ($image) {
+                return [
+                    'image_id' => $image->id, 
+                    'image_url' => asset('storage/' . $image->image_path),
+                ];
+            }),
+            'active_status' => $package->active_status,
+        ], 'Package retrieved successfully.');
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        // Package not found error
+        return $this->sendError('Package not found.', [], 404);
+    } catch (\Exception $e) {
+        // General error handling for unexpected issues
+        return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
     }
+}
+
 
     /**
      * Update a specific package (Admin only)
@@ -232,7 +249,12 @@ class PackageController extends Controller
                 'phone' => $package->phone,
                 'capacity' => $package->capacity,
                 'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null, 
-                'venue_images' => $package->images->map(fn ($image) => asset('storage/' . $image->image_path)),
+                'venue_photos' => $package->images->map(function ($image) {
+                    return [
+                        'image_id' => $image->id, // Add the image ID
+                        'image_url' => asset('storage/' . $image->image_path), // Add the image URL
+                    ];
+                }),
                 'active_status' => $package->active_status,
             ], 'Package updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
