@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Traits\ResponseTrait;
 use App\Models\RSVP;
-USE Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class RSVPController extends Controller

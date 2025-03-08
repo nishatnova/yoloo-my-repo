@@ -7,6 +7,7 @@ use App\Traits\ResponseTrait;
 use App\Models\Review;
 use App\Models\Package;
 use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -54,7 +55,7 @@ class ReviewController extends Controller
             $review = Review::create([
                 'user_id' => Auth::id(),
                 'package_id' => $package_id,
-                'order_id' => $order->id
+                'order_id' => $order->id,
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
                 'status' => $validated['status'],
@@ -63,9 +64,9 @@ class ReviewController extends Controller
     
             return $this->sendResponse($review, 'Review submitted successfully.');
             
-        } catch (ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return $this->sendError('Error submitting or updating review: ' . $e->getMessage(), [], 500);
         }
     }
@@ -173,27 +174,57 @@ class ReviewController extends Controller
     }
 
 
-    public function reviewShow($id)
+
+    public function updateStatus(Request $request, $review_id)
     {
         try {
-            $package = Package::findOrFail($id);
+            $validated = $request->validate([
+                'status' => 'required|in:0,1',
+            ]);
+            
+            $review = Review::findOrFail($review_id);
 
-            // Check if the logged-in user has purchased this package
-            $userHasPurchased = false;
+            $review->update([
+                'status' => $validated['status'],
+            ]);
 
-            if (Auth::check()) {
-                $userHasPurchased = Order::where('user_id', Auth::id())
-                                        ->where('package_id', $id)
-                                        ->exists();
-            }
+            return $this->sendResponse($review, 'Review status updated successfully.');
 
-            return $this->sendResponse([
-                'success' => $userHasPurchased,
-            ], 'Package retrieved successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
+            return $this->sendError('Error updating review status: ' . $e->getMessage(), [], 500);
         }
     }
+
+    public function reviewShow($id)
+{
+    try {
+        
+        $package = Package::findOrFail($id); 
+
+        $userHasPurchased = false;
+
+        if (Auth::check()) {
+            $userHasPurchased = Order::where('user_id', Auth::id())
+                                     ->where('package_id', $id)
+                                     ->exists();
+        }
+
+        return $this->sendResponse([
+            'success' => $userHasPurchased,
+        ], 'Package retrieved successfully.');
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        return $this->sendError('User did not purchaseed this Package.', [], 404);
+    } catch (\Illuminate\Auth\AuthenticationException $e) {
+        return $this->sendError('User is not authenticated.', [], 401);
+    } catch (\Exception $e) {
+        return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
+    }
+}
+
+
 
 
     
