@@ -36,6 +36,8 @@ use App\Http\Controllers\API\ReviewController;
             ->header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     });
 
+
+    
     Route::get('/templates', [TemplateController::class, 'index']);
     Route::get('/faqs', [FaqController::class, 'index']);
     Route::get('/faqs/{id}', [FaqController::class, 'show']);
@@ -49,6 +51,7 @@ use App\Http\Controllers\API\ReviewController;
 
     Route::get('/packages', [PackageController::class, 'index']);
     Route::get('/packages/{id}', [PackageController::class, 'show']);
+    Route::delete('/venue-images/{package_id}/{image_id}', [PackageController::class, 'deleteVenueImage']);
 
     Route::get('/packages/{id}/show-review', [ReviewController::class, 'reviewShow']);
     Route::get('/package-reviews/{package_id}', [ReviewController::class, 'getPackageReviews']);
@@ -66,6 +69,8 @@ use App\Http\Controllers\API\ReviewController;
 
     Route::get('/template/{order_id}/rsvp-list', [RSVPController::class, 'getRSVPList']);
     Route::get('/rsvp/{rsvp_id}', [RSVPController::class, 'getRSVPDetails']);
+
+   
 
 
 

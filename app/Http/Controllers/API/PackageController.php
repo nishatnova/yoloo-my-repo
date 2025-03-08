@@ -27,17 +27,7 @@ class PackageController extends Controller
             if ($activeStatus !== null) {
                 $query->where('active_status', $activeStatus);
             }
-            // if ($title) {
-            //     $query->where('title', 'like', '%' . $title . '%');
-            // }
-            // if ($location) {
-            //     $query->where('location', 'like', '%' . $location . '%');
-            // }
-            // if ($priceMin && $priceMax) {
-            //     $query->whereBetween('price', [$priceMin, $priceMax]);
-            // }
-
-            // Fetch paginated results
+            
             $packages = $query->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
 
             // Transform results to include image URLs
@@ -316,59 +306,84 @@ class PackageController extends Controller
 
 
     public function searchPackagePage(Request $request)
-{
-    try {
-        $venue = $request->query('venue'); // Get venue search input (title)
-        $location = $request->query('location'); // Get location search input
+    {
+        try {
+            $venue = $request->query('venue'); // Get venue search input (title)
+            $location = $request->query('location'); // Get location search input
 
-        if (!$venue && !$location) {
-            return $this->sendError('Please provide a search query for venue, location, or both.', [], 400);
-        }
-
-        $query = Package::query();
-
-        // If both venue & location are provided
-        if ($venue && $location) {
-            $query->where('service_title', 'LIKE', "%$venue%")
-                  ->where('location', 'LIKE', "%$location%");
-        } else {
-            // If only venue is provided
-            if ($venue) {
-                $query->where('service_title', 'LIKE', "%$venue%");
+            if (!$venue && !$location) {
+                return $this->sendError('Please provide a search query for venue, location, or both.', [], 400);
             }
 
-            // If only location is provided
-            else {
-                $query->where('location', 'LIKE', "%$location%");
+            $query = Package::query();
+
+            // If both venue & location are provided
+            if ($venue && $location) {
+                $query->where('service_title', 'LIKE', "%$venue%")
+                    ->where('location', 'LIKE', "%$location%");
+            } else {
+                // If only venue is provided
+                if ($venue) {
+                    $query->where('service_title', 'LIKE', "%$venue%");
+                }
+
+                // If only location is provided
+                else {
+                    $query->where('location', 'LIKE', "%$location%");
+                }
             }
+
+            // Get results with a limit of 10 (optional)
+            $packages = $query->get();
+
+            if ($packages->isEmpty()) {
+                return $this->sendResponse([], 'No matching packages found.');
+            }
+
+            $formattedPackages = $packages->map(function ($package) {
+                return [
+                    'id' => $package->id,
+                    'service_title' => $package->service_title,
+                    'location' => $package->location,
+                    'included_services' => $package->included_services,
+                    'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null,
+                ];
+            });
+
+            return $this->sendResponse($formattedPackages, 'Search results retrieved successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return $this->sendError('Database error occurred. Please try again later.', [], 500);
+        } catch (\Exception $e) {
+            return $this->sendError('An unexpected error occurred: ' . $e->getMessage(), [], 500);
         }
-
-        // Get results with a limit of 10 (optional)
-        $packages = $query->get();
-
-        if ($packages->isEmpty()) {
-            return $this->sendResponse([], 'No matching packages found.');
-        }
-
-        $formattedPackages = $packages->map(function ($package) {
-            return [
-                'id' => $package->id,
-                'service_title' => $package->service_title,
-                'location' => $package->location,
-                'included_services' => $package->included_services,
-                'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null,
-            ];
-        });
-
-        return $this->sendResponse($formattedPackages, 'Search results retrieved successfully.');
-    } catch (\Illuminate\Database\QueryException $e) {
-        return $this->sendError('Database error occurred. Please try again later.', [], 500);
-    } catch (\Exception $e) {
-        return $this->sendError('An unexpected error occurred: ' . $e->getMessage(), [], 500);
     }
-}
 
 
 
+    public function deleteVenueImage(Request $request, $package_id, $image_id)
+    {
+        try {
+            // Find the package
+            $package = Package::findOrFail($package_id);
+
+            // Find the image to delete
+            $image = PackageImage::findOrFail($image_id);
+
+            // Check if the image belongs to the package
+            if ($image->package_id !== $package->id) {
+                return $this->sendError('Image not associated with this package.', [], 400);
+            }
+
+            // Delete image file from storage
+            Storage::delete('public/' . $image->image_path);
+
+            // Delete the image record from the database
+            $image->delete();
+
+            return $this->sendResponse([], 'Venue image deleted successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error deleting venue image: ' . $e->getMessage(), [], 500);
+        }
+    }
     
 }
