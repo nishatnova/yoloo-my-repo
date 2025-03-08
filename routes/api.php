@@ -139,6 +139,9 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
 
         Route::post('/reviews/{review_id}/update-status', [ReviewController::class, 'updateStatus']);
+
+
+        Route::post('/package-inquiries/${inquiryId}/assign-staff', [PackageInquiryController::class, 'assignStaffToInquiry']);
         
     });
 
