@@ -24,4 +24,8 @@ class PackageInquiry extends Model
     {
         return $this->hasOne(Order::class); // Assuming each inquiry is linked to one order
     }
+    public function packageInquireStaff()
+    {
+        return $this->hasOne(PackageInquireStaff::class);
+    }
 }

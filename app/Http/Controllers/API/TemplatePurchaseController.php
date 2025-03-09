@@ -8,6 +8,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
+use Stripe\Customer;
 use App\Traits\ResponseTrait;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,9 +28,18 @@ class TemplatePurchaseController extends Controller
             //     'currency' => 'usd',
             // ]);
 
+            $customer = Customer::create([
+                'email' => $user->email,
+                'name' => $user->name,
+                'metadata' => [
+                    'user_id' => $user->id, 
+                ],
+            ]);
+
             $paymentIntent = PaymentIntent::create([
                 'amount' => $template->price * 100, 
                 'currency' => 'usd',
+                'customer' => $customer->id,
                 'automatic_payment_methods' => [
                     'enabled' => true,  
                     'allow_redirects' => 'never', 
@@ -46,6 +56,7 @@ class TemplatePurchaseController extends Controller
 
             return $this->sendResponse([
                 'payment_intent_id' => $paymentIntent->id,
+                'customer_id' => $customer->id,
                 'metadata' => $paymentIntent->metadata,
                 'template' => $template,
             ], 'Payment initiation successful.');
@@ -83,6 +94,7 @@ class TemplatePurchaseController extends Controller
                 'status' => 'Completed',
                 'service_booked' => 'Template', 
                 'stripe_payment_id' => $paymentIntent->id,
+                'stripe_customer_id' => $paymentIntent->customer,
                 'metadata' => json_encode($metadata),
             ]);
 

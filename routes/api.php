@@ -19,6 +19,7 @@ use App\Http\Controllers\API\PackageInquiryController;
 use App\Http\Controllers\API\CustomTemplateContentController;
 use App\Http\Controllers\API\RSVPController;
 use App\Http\Controllers\API\ReviewController;
+use App\Http\Controllers\API\DashboardController;
 
 
     Route::post('/webhook', [StripeWebhookController::class, 'handleWebhook']);
@@ -43,6 +44,7 @@ use App\Http\Controllers\API\ReviewController;
     Route::get('/faqs/{id}', [FaqController::class, 'show']);
 
     Route::get('/events', [PackageInquiryController::class, 'getCompletedPackageInquiries']);
+    Route::get('/latest-events', [PackageInquiryController::class, 'getLatestCompletedPackageInquiries']);
     Route::get('/events/{id}', [PackageInquiryController::class, 'showDetail']);
     
 
@@ -70,7 +72,9 @@ use App\Http\Controllers\API\ReviewController;
     Route::get('/template/{order_id}/rsvp-list', [RSVPController::class, 'getRSVPList']);
     Route::get('/rsvp/{rsvp_id}', [RSVPController::class, 'getRSVPDetails']);
 
-   
+    Route::get('/dashboard-stats', [DashboardController::class, 'getDashboardStats']);
+
+
 
 
 
@@ -143,6 +147,8 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::post('/reviews/{review_id}/update-status', [ReviewController::class, 'updateStatus']);
 
         Route::post('/package-inquiries/{inquiryId}/assign-staff', [PackageInquiryController::class, 'assignStaffToInquiry']);
+
+        
         
     });
 

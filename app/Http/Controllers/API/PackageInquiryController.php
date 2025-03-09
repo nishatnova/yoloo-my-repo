@@ -16,9 +16,9 @@ class PackageInquiryController extends Controller
     {
         try {
             // Fetch package inquiries where the associated order status is 'completed'
-            $inquiries = PackageInquiry::with(['package', 'user', 'order']) 
+            $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
                 ->whereHas('order', function ($query) {
-                    $query->where('status', 'Completed'); 
+                    $query->where('status', 'Completed');
                 })
                 ->get();
 
@@ -27,14 +27,30 @@ class PackageInquiryController extends Controller
             }
 
             $formattedInquiries = $inquiries->map(function ($inquiry) {
+                // Get the assigned staff info
+                $assignedStaffCount = 0;
+                if ($inquiry->packageInquireStaff) {
+                    // Count the assigned staff (photographer, decorator, catering)
+                    if ($inquiry->packageInquireStaff->photographerApplication) {
+                        $assignedStaffCount++;
+                    }
+                    if ($inquiry->packageInquireStaff->decoratorApplication) {
+                        $assignedStaffCount++;
+                    }
+                    if ($inquiry->packageInquireStaff->cateringApplication) {
+                        $assignedStaffCount++;
+                    }
+                }
+
                 return [
                     'event_id' => $inquiry->id,
                     'customer' => $inquiry->name,
                     'event_name' => $inquiry->package->service_title,
                     'date' => $inquiry->event_start_date . ' to ' . $inquiry->event_end_date,
-                    'amount' => $inquiry->order->amount, 
-                    'status' => $inquiry->status, 
-                    'order_status' => $inquiry->order->status
+                    'amount' => $inquiry->order->amount,
+                    'status' => $inquiry->status,
+                    'order_status' => $inquiry->order->status,
+                    'assigned_staff_count' => $assignedStaffCount,  // Assigned staff count
                 ];
             });
 
@@ -46,11 +62,88 @@ class PackageInquiryController extends Controller
         }
     }
 
+    public function getLatestCompletedPackageInquiries(Request $request)
+{
+    try {
+        // Fetch the latest 5 package inquiries where the associated order status is 'completed'
+        $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
+            ->whereHas('order', function ($query) {
+                $query->where('status', 'Completed');
+            })
+            ->latest() // Order by latest created_at
+            ->take(5) // Limit to the latest 5 inquiries
+            ->get();
+
+        if ($inquiries->isEmpty()) {
+            return $this->sendError('No completed package inquiries found.', [], 404);
+        }
+
+        $formattedInquiries = $inquiries->map(function ($inquiry) {
+            // Get the assigned staff info
+            $assignedStaffCount = 0;
+            if ($inquiry->packageInquireStaff) {
+                // Count the assigned staff (photographer, decorator, catering)
+                if ($inquiry->packageInquireStaff->photographerApplication) {
+                    $assignedStaffCount++;
+                }
+                if ($inquiry->packageInquireStaff->decoratorApplication) {
+                    $assignedStaffCount++;
+                }
+                if ($inquiry->packageInquireStaff->cateringApplication) {
+                    $assignedStaffCount++;
+                }
+            }
+
+            return [
+                'event_id' => $inquiry->id,
+                'customer' => $inquiry->name,
+                'event_name' => $inquiry->package->service_title,
+                'date' => $inquiry->event_start_date . ' to ' . $inquiry->event_end_date,
+                'amount' => $inquiry->order->amount,
+                'status' => $inquiry->status,
+                'order_status' => $inquiry->order->status,
+                'assigned_staff_count' => $assignedStaffCount,  // Assigned staff count
+            ];
+        });
+
+        return $this->sendResponse([
+            'inquiries' => $formattedInquiries,
+        ], 'Completed package inquiries retrieved successfully.');
+    } catch (\Exception $e) {
+        return $this->sendError('Error retrieving completed package inquiries: ' . $e->getMessage(), [], 500);
+    }
+}
+
+
+
     public function showDetail($inquiry_id)
     {
         try {
-            $inquiry = PackageInquiry::with(['package', 'user', 'order'])
+            $inquiry = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
                 ->findOrFail($inquiry_id);
+
+            // Prepare assigned staff info
+            $assignedStaff = [];
+            if ($inquiry->packageInquireStaff) {
+                if ($inquiry->packageInquireStaff->photographerApplication) {
+                    $assignedStaff[] = [
+                        'role' => 'Photographer',
+                        'name' => $inquiry->packageInquireStaff->photographerApplication->applicant_name,
+                    ];
+                }
+                if ($inquiry->packageInquireStaff->decoratorApplication) {
+                    $assignedStaff[] = [
+                        'role' => 'Decorator',
+                        'name' => $inquiry->packageInquireStaff->decoratorApplication->applicant_name,
+                    ];
+                }
+                if ($inquiry->packageInquireStaff->cateringApplication) {
+                    $assignedStaff[] = [
+                        'role' => 'Catering',
+                        'name' => $inquiry->packageInquireStaff->cateringApplication->applicant_name,
+                    ];
+                }
+            }
 
             $inquiryDetails = [
                 'event_id' => $inquiry->id,
@@ -66,6 +159,7 @@ class PackageInquiryController extends Controller
                 'order_status' => $inquiry->order->status,
                 'order_date' => $inquiry->order->created_at->format('Y-m-d H:i:s'),
                 'payment_id' => $inquiry->order->stripe_payment_id,
+                'assigned_staff' => $assignedStaff,  // Assigned staff with their role and name
             ];
 
             return $this->sendResponse($inquiryDetails, 'Package inquiry details retrieved successfully.');
@@ -98,17 +192,14 @@ class PackageInquiryController extends Controller
     public function assignStaffToInquiry(Request $request, $inquiry_id)
     {
         try {
-            // Validate the incoming data
             $validated = $request->validate([
                 'photographer_application_id' => 'nullable|exists:job_applications,id',
                 'decorator_application_id' => 'nullable|exists:job_applications,id',
                 'catering_application_id' => 'nullable|exists:job_applications,id',
             ]);
 
-            // Fetch the package inquiry (event)
             $inquiry = PackageInquiry::findOrFail($inquiry_id);
 
-            // Check if the job applications are approved for the respective roles (photographer, decorator, catering)
             $photographerApplication = JobApplication::where('status', 'Approved')
                 ->where('id', $validated['photographer_application_id'] ?? null)
                 ->first();
@@ -121,11 +212,10 @@ class PackageInquiryController extends Controller
                 ->where('id', $validated['catering_application_id'] ?? null)
                 ->first();
 
-            // Check if staff assignment already exists for this package inquiry (event)
             $staffAssignment = PackageInquireStaff::where('package_inquiry_id', $inquiry->id)->first();
 
             if ($staffAssignment) {
-                // Update the existing staff assignment
+             
                 $staffAssignment->update([
                     'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
                     'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
@@ -134,7 +224,7 @@ class PackageInquiryController extends Controller
 
                 return $this->sendResponse($staffAssignment, 'Staff assignment updated successfully.');
             } else {
-                // If no assignment exists, create a new one
+                
                 $staffAssignment = PackageInquireStaff::create([
                     'package_inquiry_id' => $inquiry->id,
                     'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
