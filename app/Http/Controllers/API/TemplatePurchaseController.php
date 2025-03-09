@@ -27,7 +27,21 @@ class TemplatePurchaseController extends Controller
             //     'amount' => $template->price * 100, // Convert price to cents
             //     'currency' => 'usd',
             // ]);
+            
+        //     if (!$user->stripe_customer_id) {
 
+        //         Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        //         $customer = Customer::create([
+        //             'email' => $user->email,
+        //             'name' => $user->name,
+        //             'metadata' => [
+        //                 'user_id' => $user->id, 
+        //             ],
+        //         ]);
+        //         $user->stripe_customer_id = $customer->id;
+        //         $user->save();
+        //    }
             $customer = Customer::create([
                 'email' => $user->email,
                 'name' => $user->name,
