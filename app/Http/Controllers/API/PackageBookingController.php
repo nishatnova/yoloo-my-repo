@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\PackageInquiry;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
+use Stripe\Customer;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\ResponseTrait;
 use Exception;
@@ -48,9 +49,18 @@ class PackageBookingController extends Controller
 
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
+            $customer = Customer::create([
+                'email' => $user->email,
+                'name' => $user->name,
+                'metadata' => [
+                    'user_id' => $user->id, 
+                ],
+            ]);
+
             $paymentIntent = PaymentIntent::create([
                 'amount' => $package->price * 100, 
                 'currency' => 'usd',
+                'customer' => $customer->id,
                 'automatic_payment_methods' => [
                     'enabled' => true,  
                     'allow_redirects' => 'never', // Avoid redirects
@@ -67,6 +77,7 @@ class PackageBookingController extends Controller
 
             return $this->sendResponse([
                 'payment_intent_id' => $paymentIntent->id,
+                'customer_id' => $customer->id,
                 'metadata' => $paymentIntent->metadata,
                 'package' => $package,
             ], 'Payment initiation successful.');
@@ -101,6 +112,7 @@ class PackageBookingController extends Controller
                 'service_booked' => 'Package', 
                 'status' => 'Completed', 
                 'stripe_payment_id' => $paymentIntent->id,
+                'stripe_customer_id' => $paymentIntent->customer,
                 'package_inquiry_id' => $metadata['inquiry_id'],
                 'metadata' => json_encode($metadata),
             ]);
