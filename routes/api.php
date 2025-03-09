@@ -134,14 +134,15 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
 
         Route::get('/job-applications', [JobApplicationController::class, 'getAllApplications']);
 
+        Route::get('/approved-applicant', [JobApplicationController::class, 'getJobApplicantsForSelection']);
+
         Route::post('/job-applications/status/{id}', [JobApplicationController::class, 'updateApplicationStatus']);
         Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
         Route::post('/events/{id}/status', [PackageInquiryController::class, 'updateStatus']);
 
         Route::post('/reviews/{review_id}/update-status', [ReviewController::class, 'updateStatus']);
 
-
-        Route::post('/package-inquiries/${inquiryId}/assign-staff', [PackageInquiryController::class, 'assignStaffToInquiry']);
+        Route::post('/package-inquiries/{inquiryId}/assign-staff', [PackageInquiryController::class, 'assignStaffToInquiry']);
         
     });
 

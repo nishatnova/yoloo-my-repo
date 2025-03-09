@@ -62,6 +62,7 @@ class JobApplicationController extends Controller
     {
         try {
         $status = $request->query('status'); 
+        $role = $request->query('role');
         $limit = $request->query('limit', 10); 
         $page = $request->query('page', 1);
 
@@ -69,6 +70,10 @@ class JobApplicationController extends Controller
 
         if ($status !== null) {
             $query->where('status', $status);
+        }
+
+        if ($role) {
+            $query->where('role', $role);
         }
 
         $applications = $query->with(['user', 'jobPost'])->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
@@ -98,6 +103,30 @@ class JobApplicationController extends Controller
             return $this->sendError('Error retrieving job applications: ' . $e->getMessage(), [], 500);
         }
     }
+
+    public function getJobApplicantsForSelection(Request $request)
+    {
+        try {
+            $role = $request->query('role');
+            $query = JobApplication::query();
+
+            if ($role) {
+                $query->where('role', $role);
+            }
+
+            $query->where('status', 'Approved');  
+
+            $applicants = $query->get(['id', 'applicant_name', 'role']); 
+
+            return $this->sendResponse([
+                'applicants' => $applicants,
+            ], 'Approved job applicants retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving approved job applicants: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+
 
     public function updateApplicationStatus(Request $request, $application_id)
     {

@@ -94,7 +94,7 @@ class PackageInquiryController extends Controller
         }
     }
 
-    // Assign job application staff to a package inquiry
+  
     public function assignStaffToInquiry(Request $request, $inquiry_id)
     {
         try {
@@ -121,21 +121,34 @@ class PackageInquiryController extends Controller
                 ->where('id', $validated['catering_application_id'] ?? null)
                 ->first();
 
-            // Assign the staff based on the job application IDs
-            $staffAssignment = PackageInquireStaff::create([
-                'package_inquiry_id' => $inquiry->id,
-                'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
-                'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
-                'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
-            ]);
+            // Check if staff assignment already exists for this package inquiry (event)
+            $staffAssignment = PackageInquireStaff::where('package_inquiry_id', $inquiry->id)->first();
 
-            // Return response
-            return $this->sendResponse($staffAssignment, 'Staff assigned to event successfully.');
+            if ($staffAssignment) {
+                // Update the existing staff assignment
+                $staffAssignment->update([
+                    'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
+                    'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
+                    'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
+                ]);
 
+                return $this->sendResponse($staffAssignment, 'Staff assignment updated successfully.');
+            } else {
+                // If no assignment exists, create a new one
+                $staffAssignment = PackageInquireStaff::create([
+                    'package_inquiry_id' => $inquiry->id,
+                    'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
+                    'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
+                    'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
+                ]);
+
+                return $this->sendResponse($staffAssignment, 'Staff assigned to event successfully.');
+            }
         } catch (\Exception $e) {
-            return $this->sendError('Error assigning staff: ' . $e->getMessage(), [], 500);
+            return $this->sendError('Error assigning or updating staff: ' . $e->getMessage(), [], 500);
         }
     }
+
 
    
 
