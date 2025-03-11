@@ -126,6 +126,47 @@ class JobApplicationController extends Controller
         }
     }
 
+    public function getApprovedPhotographer(Request $request)
+    {
+        try {
+            $photographer = JobApplication::where('role', 'Photography')->where('status', 'Approved')->get(['id', 'applicant_name', 'role']);
+
+
+            return $this->sendResponse([
+                'photographer' => $photographer,
+            ], 'Approved job photographer retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving approved job photographer: ' . $e->getMessage(), [], 500);
+        }
+    }
+    public function getApprovedCatering(Request $request)
+    {
+        try {
+            $catering = JobApplication::where('role', 'Catering')->where('status', 'Approved')->get(['id', 'applicant_name', 'role']);
+
+
+            return $this->sendResponse([
+                'catering' => $catering,
+            ], 'Approved job photographer retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving approved job photographer: ' . $e->getMessage(), [], 500);
+        }
+    }
+    public function getApprovedDecorator(Request $request)
+    {
+        try {
+            $decorator = JobApplication::where('role', 'Decorator')->where('status', 'Approved')->get(['id', 'applicant_name', 'role']);
+
+
+            return $this->sendResponse([
+                'decorator' => $decorator,
+            ], 'Approved job photographer retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving approved job photographer: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+
 
 
     public function updateApplicationStatus(Request $request, $application_id)

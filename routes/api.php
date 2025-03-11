@@ -139,6 +139,9 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
         Route::get('/job-applications', [JobApplicationController::class, 'getAllApplications']);
 
         Route::get('/approved-applicant', [JobApplicationController::class, 'getJobApplicantsForSelection']);
+        Route::get('/approved-photographer', [JobApplicationController::class, 'getApprovedPhotographer']);
+        Route::get('/approved-catering', [JobApplicationController::class, 'getApprovedCatering']);
+        Route::get('/approved-decorator', [JobApplicationController::class, 'getApprovedDecorator']);
 
         Route::post('/job-applications/status/{id}', [JobApplicationController::class, 'updateApplicationStatus']);
         Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
