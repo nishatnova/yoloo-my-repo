@@ -99,6 +99,10 @@ class TemplatePurchaseController extends Controller
             $order = Order::where('stripe_payment_id', $paymentIntent->id)->first();
 
             if ($order) {
+                // Update order status to 'completed'
+                $order->status = 'Completed';
+                $order->save();
+
                 return $this->sendResponse([
                     'user_id' => Auth::id(),
                     'template_id' => $template_id,

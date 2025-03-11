@@ -75,7 +75,19 @@ class PackageBookingController extends Controller
             ]
             ]);
 
+            $order = Order::create([
+                'user_id' => $user->id,
+                'package_id' => $package_id,
+                'amount' => $paymentIntent->amount / 100, 
+                'status' => 'Pending',  // Set initial status to 'pending'
+                'service_booked' => 'Package',
+                'stripe_payment_id' => $paymentIntent->id,
+                'stripe_customer_id' => $customer->id,
+                'metadata' => json_encode($paymentIntent->metadata),
+            ]);
+
             return $this->sendResponse([
+                'order_id' => $order->id,
                 'payment_intent_id' => $paymentIntent->id,
                 'customer_id' => $customer->id,
                 'metadata' => $paymentIntent->metadata,
@@ -105,29 +117,28 @@ class PackageBookingController extends Controller
                 'payment_method' => $validated['payment_method_id'],
             ]);
 
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'package_id' => $package_id,
-                'amount' => $paymentIntent->amount_received / 100, 
-                'service_booked' => 'Package', 
-                'status' => 'Completed', 
-                'stripe_payment_id' => $paymentIntent->id,
-                'stripe_customer_id' => $paymentIntent->customer,
-                'package_inquiry_id' => $metadata['inquiry_id'],
-                'metadata' => json_encode($metadata),
-            ]);
+            $order = Order::where('stripe_payment_id', $paymentIntent->id)->first();
 
-            return $this->sendResponse([
-                'user_id' => Auth::id(),
-                'package_id' => $package_id,
-                'transaction_id' => $paymentIntent->id,
-                'amount' => $paymentIntent->amount_received / 100, 
-                'date' => date('m/d/Y', $paymentIntent->created), 
-                'time' => date('H:i:s', $paymentIntent->created), 
-                'payment_method' => $paymentIntent->payment_method_types[0], 
-                'product' => $metadata['service_title'], 
-                'customer' => $metadata['user_name'], 
-            ], 'Payment completed successfully.');
+            if ($order) {
+                // Update order status to 'completed'
+                $order->status = 'Completed';
+                $order->save();
+
+                return $this->sendResponse([
+                    'user_id' => Auth::id(),
+                    'package_id' => $package_id,
+                    'transaction_id' => $paymentIntent->id,
+                    'amount' => $paymentIntent->amount_received / 100, 
+                    'date' => date('m/d/Y', $paymentIntent->created), 
+                    'time' => date('H:i:s', $paymentIntent->created), 
+                    'payment_method' => $paymentIntent->payment_method_types[0], 
+                    'product' => $metadata['service_title'], 
+                    'customer' => $metadata['user_name'], 
+                    'status' => $order->status,
+                ], 'Payment completed successfully.');
+            }
+            return $this->sendError('Order not found for payment intent.', [], 404);
+
         } catch (Exception $e) {
             return $this->sendError('Error confirming payment: ' . $e->getMessage(), [], 500);
         }
