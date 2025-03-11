@@ -47,10 +47,7 @@ class StripeWebhookController extends Controller
                 $this->handlePaymentIntentFailed($paymentIntent);
                 break;
 
-            case 'payment_intent.created':
-                $paymentIntent = $event->data->object;
-                $this->handlePaymentIntentCreated($paymentIntent);
-                break;
+           
 
             default:
                 Log::info("Unhandled event type", ['event_type' => $event->type]);
@@ -67,7 +64,7 @@ class StripeWebhookController extends Controller
     {
         Log::info('Payment intent succeeded', ['payment_intent_id' => $paymentIntent->id]);
 
-        // Get the order associated with this payment
+        // Get the order and update its status
         $order = Order::where('stripe_payment_id', $paymentIntent->id)->first();
 
         if ($order) {
@@ -75,7 +72,7 @@ class StripeWebhookController extends Controller
             $order->save();
             Log::info('Order marked as completed', ['order_id' => $order->id]);
         } else {
-            Log::error("Order not found for payment intent: " . $paymentIntent->id);
+            Log::error('Order not found for payment intent', ['payment_intent_id' => $paymentIntent->id]);
         }
     }
 
@@ -100,17 +97,18 @@ class StripeWebhookController extends Controller
     /**
      * Handle payment intent creation
      */
-    protected function handlePaymentIntentCreated($paymentIntent)
-    {
-        Log::info('Payment intent created', ['payment_intent_id' => $paymentIntent->id]);
+    // protected function handlePaymentIntentCreated($paymentIntent)
+    // {
+    //     Log::info('Payment intent created', ['payment_intent_id' => $paymentIntent->id]);
 
-        
-        $order = Order::create([
-            'stripe_payment_id' => $paymentIntent->id,
-            'amount' => $paymentIntent->amount / 100, 
-            'status' => 'pending',
-        ]);
-
-        Log::info('Payment intent created and order saved', ['order_id' => $order->id]);
-    }
+    //     // Create a new order on payment intent creation
+    //     $order = Order::create([
+    //         'stripe_payment_id' => $paymentIntent->id,
+    //         'amount' => $paymentIntent->amount / 100, 
+    //         'status' => 'pending',
+    //         'user_id' => $paymentIntent->metadata['user_id'], // Include user_id
+    //     ]);
+    
+    //     Log::info('Order created for payment intent', ['order_id' => $order->id]);
+    // }
 }

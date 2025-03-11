@@ -22,7 +22,7 @@ use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\DashboardController;
 
 
-    Route::post('/webhook', [StripeWebhookController::class, 'handleWebhook']);
+    Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
     Route::post('/register', [AuthController::class, 'register']);
 
     

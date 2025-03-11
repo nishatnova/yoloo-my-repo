@@ -23,25 +23,7 @@ class TemplatePurchaseController extends Controller
 
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
-            // $paymentIntent = PaymentIntent::create([
-            //     'amount' => $template->price * 100, // Convert price to cents
-            //     'currency' => 'usd',
-            // ]);
             
-        //     if (!$user->stripe_customer_id) {
-
-        //         Stripe::setApiKey(env('STRIPE_SECRET'));
-
-        //         $customer = Customer::create([
-        //             'email' => $user->email,
-        //             'name' => $user->name,
-        //             'metadata' => [
-        //                 'user_id' => $user->id, 
-        //             ],
-        //         ]);
-        //         $user->stripe_customer_id = $customer->id;
-        //         $user->save();
-        //    }
             $customer = Customer::create([
                 'email' => $user->email,
                 'name' => $user->name,
@@ -66,13 +48,26 @@ class TemplatePurchaseController extends Controller
                     'user_email' => $user->email,
                 ]
             ]);
+
+            $order = Order::create([
+                'user_id' => $user->id,
+                'template_id' => $template->id,
+                'amount' => $paymentIntent->amount / 100, 
+                'status' => 'Pending',  // Set initial status to 'pending'
+                'service_booked' => 'Template',
+                'stripe_payment_id' => $paymentIntent->id,
+                'stripe_customer_id' => $customer->id,
+                'metadata' => json_encode($paymentIntent->metadata),
+            ]);
             
 
             return $this->sendResponse([
+                'order_id' => $order->id,
                 'payment_intent_id' => $paymentIntent->id,
                 'customer_id' => $customer->id,
                 'metadata' => $paymentIntent->metadata,
                 'template' => $template,
+                
             ], 'Payment initiation successful.');
         } catch (\Exception $e) {
             return $this->sendError('Error initiating payment: ' . $e->getMessage(), [], 500);
@@ -101,29 +96,23 @@ class TemplatePurchaseController extends Controller
                 'payment_method' => $validated['payment_method_id'],
             ]);
 
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'template_id' => $template_id,
-                'amount' => $paymentIntent->amount_received / 100, 
-                'status' => 'Completed',
-                'service_booked' => 'Template', 
-                'stripe_payment_id' => $paymentIntent->id,
-                'stripe_customer_id' => $paymentIntent->customer,
-                'metadata' => json_encode($metadata),
-            ]);
+            $order = Order::where('stripe_payment_id', $paymentIntent->id)->first();
 
-            // Return success response
-            return $this->sendResponse([
-                'user_id' => Auth::id(),
-                'template_id' => $template_id,
-                'transaction_id' => $paymentIntent->id,
-                'amount' => $paymentIntent->amount_received / 100, 
-                'date' => date('m/d/Y', $paymentIntent->created), 
-                'time' => date('H:i:s', $paymentIntent->created), 
-                'payment_method' => $paymentIntent->payment_method_types[0], 
-                'product' => $metadata['template_title'], 
-                'customer' => $metadata['user_name'], 
-            ], 'Payment completed successfully.');
+            if ($order) {
+                return $this->sendResponse([
+                    'user_id' => Auth::id(),
+                    'template_id' => $template_id,
+                    'transaction_id' => $paymentIntent->id,
+                    'amount' => $paymentIntent->amount_received / 100, 
+                    'date' => date('m/d/Y', $paymentIntent->created), 
+                    'time' => date('H:i:s', $paymentIntent->created), 
+                    'payment_method' => $paymentIntent->payment_method_types[0], 
+                    'product' => $metadata['template_title'], 
+                    'customer' => $metadata['user_name'], 
+                    'status' => $order->status,
+                ], 'Payment completed successfully.');
+            }
+            return $this->sendError('Order not found for payment intent.', [], 404);
 
         } catch (\Exception $e) {
             return $this->sendError('Error confirming payment: ' . $e->getMessage(), [], 500);
