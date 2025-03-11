@@ -78,6 +78,7 @@ class PackageBookingController extends Controller
             $order = Order::create([
                 'user_id' => $user->id,
                 'package_id' => $package_id,
+                'package_inquiry_id' => $inquiry->id,
                 'amount' => $paymentIntent->amount / 100, 
                 'status' => 'Pending',  // Set initial status to 'pending'
                 'service_booked' => 'Package',
@@ -92,6 +93,7 @@ class PackageBookingController extends Controller
                 'customer_id' => $customer->id,
                 'metadata' => $paymentIntent->metadata,
                 'package' => $package,
+                'inquiry' => $inquiry,
             ], 'Payment initiation successful.');
         } catch (Exception $e) {
             return $this->sendError('Error initiating payment: ' . $e->getMessage(), [], 500);

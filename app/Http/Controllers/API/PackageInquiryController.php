@@ -15,22 +15,28 @@ class PackageInquiryController extends Controller
     public function getCompletedPackageInquiries(Request $request)
     {
         try {
-            // Fetch package inquiries where the associated order status is 'completed'
+            $status = $request->query('status'); 
+            $limit = $request->query('limit', 10); 
+            $page = $request->query('page', 1);  
+
             $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
                 ->whereHas('order', function ($query) {
-                    $query->where('status', 'Completed');
-                })
-                ->get();
+                    $query->where('status', 'completed');
+                });
+
+                if ($status) {
+                    $inquiries->where('status', $status);
+                }
+
+                $inquiries = $inquiries->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
 
             if ($inquiries->isEmpty()) {
                 return $this->sendError('No completed package inquiries found.', [], 404);
             }
 
             $formattedInquiries = $inquiries->map(function ($inquiry) {
-                // Get the assigned staff info
                 $assignedStaffCount = 0;
                 if ($inquiry->packageInquireStaff) {
-                    // Count the assigned staff (photographer, decorator, catering)
                     if ($inquiry->packageInquireStaff->photographerApplication) {
                         $assignedStaffCount++;
                     }
@@ -50,12 +56,18 @@ class PackageInquiryController extends Controller
                     'amount' => $inquiry->order->amount,
                     'status' => $inquiry->status,
                     'order_status' => $inquiry->order->status,
-                    'assigned_staff_count' => $assignedStaffCount,  // Assigned staff count
+                    'assigned_staff' => $assignedStaffCount, 
                 ];
             });
 
             return $this->sendResponse([
                 'inquiries' => $formattedInquiries,
+                'meta' => [
+                    'current_page' => $inquiries->currentPage(),
+                    'total' => $inquiries->total(),
+                    'per_page' => $inquiries->perPage(),
+                    'last_page' => $inquiries->lastPage(),
+                ],
             ], 'Completed package inquiries retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving completed package inquiries: ' . $e->getMessage(), [], 500);
@@ -65,13 +77,13 @@ class PackageInquiryController extends Controller
     public function getLatestCompletedPackageInquiries(Request $request)
 {
     try {
-        // Fetch the latest 5 package inquiries where the associated order status is 'completed'
+        
         $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
             ->whereHas('order', function ($query) {
-                $query->where('status', 'Completed');
+                $query->where('status', 'completed');
             })
-            ->latest() // Order by latest created_at
-            ->take(5) // Limit to the latest 5 inquiries
+            ->latest() 
+            ->take(5) 
             ->get();
 
         if ($inquiries->isEmpty()) {
@@ -79,10 +91,10 @@ class PackageInquiryController extends Controller
         }
 
         $formattedInquiries = $inquiries->map(function ($inquiry) {
-            // Get the assigned staff info
+            
             $assignedStaffCount = 0;
             if ($inquiry->packageInquireStaff) {
-                // Count the assigned staff (photographer, decorator, catering)
+                
                 if ($inquiry->packageInquireStaff->photographerApplication) {
                     $assignedStaffCount++;
                 }
@@ -102,7 +114,7 @@ class PackageInquiryController extends Controller
                 'amount' => $inquiry->order->amount,
                 'status' => $inquiry->status,
                 'order_status' => $inquiry->order->status,
-                'assigned_staff_count' => $assignedStaffCount,  // Assigned staff count
+                'assigned_staff' => $assignedStaffCount, 
             ];
         });
 

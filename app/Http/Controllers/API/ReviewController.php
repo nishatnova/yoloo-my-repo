@@ -86,7 +86,7 @@ class ReviewController extends Controller
                 $query->where('home_status', $home_status);
             }
 
-            $reviews = $query->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
+            $reviews = $query->paginate($limit, ['*'], 'page', $page);
 
             $reviews->getCollection()->transform(function ($review) {
                 return [
