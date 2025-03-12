@@ -30,12 +30,12 @@ use App\Http\Controllers\API\DashboardController;
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-    Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
-    Route::options('/refresh-token', function () {
-        return response('', 200)->header('Access-Control-Allow-Origin', '*')
-            ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-            ->header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-    });
+    Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->withoutMiddleware('jwt.auth');;
+    // Route::options('/refresh-token', function () {
+    //     return response('', 200)->header('Access-Control-Allow-Origin', '*')
+    //         ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    //         ->header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    // });
 
 
     

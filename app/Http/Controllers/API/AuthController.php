@@ -81,13 +81,9 @@ class AuthController extends Controller
             JWTAuth::factory()->setTTL(60); // 2 days
 
 
-            // If token is invalid or expired, attempt will return false
             if (!$accessToken = JWTAuth::attempt($request->only('email', 'password'))) {
                 return $this->sendError('Invalid credentials', [], 401);
             }
-
-
-            // Manually set the authenticated user
             $user = auth()->user();
 
             // Generate the refresh token
