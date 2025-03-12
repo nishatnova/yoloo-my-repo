@@ -33,7 +33,7 @@ class OrderController extends Controller
                 return [
                     'order_id' => $order->id,
                     'service_booked' => $order->service_booked,
-                    'booking_date' => $order->created_at->format('Y-m-d H:i:s'),
+                    'date' => $order->created_at->format('Y-M-d'),
                     'status' => $order->status,
                     'amount' => $order->amount,
                 ];
@@ -83,6 +83,7 @@ class OrderController extends Controller
                 return [
                     'order_id' => $order->id,
                     'customer_name' => $order->user->name,
+                    'customer_email' => $order->user->email,
                     'amount' => $order->amount,
                     'status' => $order->status,
                     'date' => $order->created_at->format('Y-M-d'),
@@ -126,7 +127,7 @@ class OrderController extends Controller
                 'amount' => $order->amount,
                 'status' => $order->status,
                 'payment_id' => $order->stripe_payment_id,
-                'booking_date' => $order->created_at->format('Y-m-d H:i:s'),
+                'date' => $order->created_at->format('Y-M-d'),
                 'user' => [
                         'name' => $order->user->name, 
                         'email' => $order->user->email, 

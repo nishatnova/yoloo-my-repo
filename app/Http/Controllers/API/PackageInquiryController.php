@@ -8,6 +8,7 @@ use App\Models\JobApplication;
 use App\Models\PackageInquireStaff;
 use App\Traits\ResponseTrait;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class PackageInquiryController extends Controller
 {
@@ -52,7 +53,8 @@ class PackageInquiryController extends Controller
                     'event_id' => $inquiry->id,
                     'customer' => $inquiry->name,
                     'event_name' => $inquiry->package->service_title,
-                    'date' => $inquiry->event_start_date . ' to ' . $inquiry->event_end_date,
+                    'date' => Carbon::parse($inquiry->event_start_date)->format('Y-M-d') . ' to ' . 
+                         Carbon::parse($inquiry->event_end_date)->format('Y-M-d'),
                     'amount' => $inquiry->order->amount,
                     'status' => $inquiry->status,
                     'order_status' => $inquiry->order->status,
@@ -110,7 +112,8 @@ class PackageInquiryController extends Controller
                     'event_id' => $inquiry->id,
                     'customer' => $inquiry->name,
                     'event_name' => $inquiry->package->service_title,
-                    'date' => $inquiry->event_start_date . ' to ' . $inquiry->event_end_date,
+                    'date' => Carbon::parse($inquiry->event_start_date)->format('Y-M-d') . ' to ' . 
+                         Carbon::parse($inquiry->event_end_date)->format('Y-M-d'),
                     'amount' => $inquiry->order->amount,
                     'status' => $inquiry->status,
                     'order_status' => $inquiry->order->status,

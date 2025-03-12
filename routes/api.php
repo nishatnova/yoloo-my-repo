@@ -73,6 +73,8 @@ use App\Http\Controllers\API\DashboardController;
     Route::get('/rsvp/{rsvp_id}', [RSVPController::class, 'getRSVPDetails']);
 
     Route::get('/dashboard-stats', [DashboardController::class, 'getDashboardStats']);
+    Route::get('/dashboard-graph', [DashboardController::class, 'getDashboardGraphData']);
+    Route::get('/dashboard-period', [DashboardController::class, 'getEarningsData']);
 
 
 

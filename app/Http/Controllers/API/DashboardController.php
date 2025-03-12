@@ -112,6 +112,135 @@ class DashboardController extends Controller
         }
     }
 
+    public function getDashboardGraphData()
+    {
+        try {
+            $months = [
+                1 => "Jan", 2 => "Feb", 3 => "Mar", 4 => "Apr",
+                5 => "May", 6 => "Jun", 7 => "Jul", 8 => "Aug",
+                9 => "Sep", 10 => "Oct", 11 => "Nov", 12 => "Dec"
+            ];
+
+            $yearlyBreakdown = [];
+            $weeklyBreakdown = [];
+
+            // ✅ Calculate Total Revenue for the Year
+            $totalYearlyAmount = Order::where('status', 'Completed')
+                ->whereYear('created_at', now()->year)
+                ->sum('amount');
+
+            // ✅ Monthly Data Calculation (Convert to Percentage)
+            for ($i = 1; $i <= 12; $i++) {
+                $monthlyTotal = Order::where('status', 'Completed')
+                    ->whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', $i)
+                    ->sum('amount');
+
+                $percentage = ($totalYearlyAmount > 0) 
+                    ? round(($monthlyTotal / $totalYearlyAmount) * 100, 2)
+                    : 0;
+
+                $yearlyBreakdown[] = [
+                    'period' => $months[$i],  
+                    'value' => $percentage // Convert to percentage
+                ];
+            }
+
+            // ✅ Weekly Data Calculation (Convert to Percentage)
+            $currentMonth = now()->month;
+            $totalMonthlyAmount = Order::where('status', 'Completed')
+                ->whereYear('created_at', now()->year)
+                ->whereMonth('created_at', $currentMonth)
+                ->sum('amount');
+
+            $weeks = [
+                "Week 1" => [1, 7],
+                "Week 2" => [8, 14],
+                "Week 3" => [15, 21],
+                "Week 4" => [22, 31]
+            ];
+
+            foreach ($weeks as $weekName => $daysRange) {
+                $weeklyTotal = Order::where('status', 'Completed')
+                    ->whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', $currentMonth)
+                    ->whereDay('created_at', '>=', $daysRange[0])
+                    ->whereDay('created_at', '<=', $daysRange[1])
+                    ->sum('amount');
+
+                $percentage = ($totalMonthlyAmount > 0) 
+                    ? round(($weeklyTotal / $totalMonthlyAmount) * 100, 2)
+                    : 0;
+
+                $weeklyBreakdown[] = [
+                    'period' => $weekName,
+                    'value' => $percentage // Convert to percentage
+                ];
+            }
+
+            return $this->sendResponse([
+                'monthly_data' => $yearlyBreakdown,
+                'weekly_data' => $weeklyBreakdown
+            ], 'Dashboard stats retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving dashboard stats.', [], 500);
+        }
+    }
+
+
+    public function getEarningsData()
+    {
+        try {
+            $dailyTarget = 5000; 
+            $weeklyTarget = $dailyTarget * 7; 
+            $monthlyTarget = $dailyTarget * now()->daysInMonth; 
+
+
+            $todayEarnings = Order::where('status', 'Completed')
+                ->whereDate('created_at', today())
+                ->sum('amount');
+            $todayEarnings = floatval($todayEarnings);
+
+            $weeklyEarnings = Order::where('status', 'Completed')
+                ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                ->sum('amount');
+            $weeklyEarnings = floatval($weeklyEarnings);
+
+            $monthlyEarnings = Order::where('status', 'Completed')
+                ->whereMonth('created_at', now()->month)
+                ->sum('amount');
+            $monthlyEarnings = floatval($monthlyEarnings);
+
+
+            // 🎯 Calculate Percentages Against Targets
+            $todayPercentage = ($dailyTarget > 0) ? round(($todayEarnings / $dailyTarget) * 100, 2) : 0;
+            $weeklyPercentage = ($weeklyTarget > 0) ? round(($weeklyEarnings / $weeklyTarget) * 100, 2) : 0;
+            $monthlyPercentage = ($monthlyTarget > 0) ? round(($monthlyEarnings / $monthlyTarget) * 100, 2) : 0;
+        
+            return $this->sendResponse([
+                'today_earnings' => [
+                    'amount' => $todayEarnings,
+                    'percentage' => $todayPercentage
+                ],
+                'weekly_earnings' => [
+                    'amount' => $weeklyEarnings,
+                    'percentage' => $weeklyPercentage
+                ],
+                'monthly_earnings' => [
+                    'amount' => $monthlyEarnings,
+                    'percentage' => $monthlyPercentage
+                ],
+                
+            ], 'Earnings data retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving earnings data: ' . $e->getMessage(), [], 500);
+        }
+    }
+
+
+
+
+
 
 
 }
