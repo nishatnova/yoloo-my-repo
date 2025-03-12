@@ -21,7 +21,7 @@ class PackageInquiryController extends Controller
 
             $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
                 ->whereHas('order', function ($query) {
-                    $query->where('status', 'completed');
+                    $query->where('status', 'Completed');
                 });
 
                 if ($status) {
@@ -80,7 +80,7 @@ class PackageInquiryController extends Controller
             
             $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
                 ->whereHas('order', function ($query) {
-                    $query->where('status', 'completed');
+                    $query->where('status', 'Completed');
                 })
                 ->latest() 
                 ->take(5) 

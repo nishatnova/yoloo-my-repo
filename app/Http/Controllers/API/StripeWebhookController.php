@@ -68,7 +68,7 @@ class StripeWebhookController extends Controller
         $order = Order::where('stripe_payment_id', $paymentIntent->id)->first();
 
         if ($order) {
-            $order->status = 'completed';
+            $order->status = 'Completed';
             $order->save();
             Log::info('Order marked as completed', ['order_id' => $order->id]);
         } else {
@@ -86,7 +86,7 @@ class StripeWebhookController extends Controller
         $order = Order::where('stripe_payment_id', $paymentIntent->id)->first();
 
         if ($order) {
-            $order->status = 'failed';
+            $order->status = 'Failed';
             $order->save();
             Log::info('Order marked as failed', ['order_id' => $order->id]);
         } else {

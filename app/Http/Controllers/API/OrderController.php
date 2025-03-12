@@ -85,7 +85,7 @@ class OrderController extends Controller
                     'customer_name' => $order->user->name,
                     'amount' => $order->amount,
                     'status' => $order->status,
-                    'booking_date' => $order->created_at->format('Y-m-d H:i:s'),
+                    'date' => $order->created_at->format('Y-M-d'),
                     'service_booked' => $order->service_booked,
                     'payment_id' => $order->stripe_payment_id,
                 ];

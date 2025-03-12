@@ -90,11 +90,11 @@ class ReviewController extends Controller
 
             $reviews->getCollection()->transform(function ($review) {
                 return [
-                    'id' => $review->id,
-                    'user_name' => $review->user->name,
-                    'package_name' => $review->package->service_title,
+                    'review_id' => $review->id,
+                    'name' => $review->user->name,
+                    'package_title' => $review->package->service_title,
                     'rating' => $review->rating,
-                    'status' => $review->status,
+                    'status' => $review->status ? 'Active' : 'Inactive',
                     'home_status' => $review->home_status,
                     'created_at' => $review->created_at->format('d M, Y h:i A'),
                 ];
