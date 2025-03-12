@@ -31,7 +31,7 @@ class PackageInquiryController extends Controller
                 $inquiries = $inquiries->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
 
             if ($inquiries->isEmpty()) {
-                return $this->sendError('No completed package inquiries found.', [], 404);
+                return $this->sendResponse('No completed package inquiries found.', []);
             }
 
             $formattedInquiries = $inquiries->map(function ($inquiry) {
@@ -75,56 +75,56 @@ class PackageInquiryController extends Controller
     }
 
     public function getLatestCompletedPackageInquiries(Request $request)
-{
-    try {
-        
-        $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
-            ->whereHas('order', function ($query) {
-                $query->where('status', 'completed');
-            })
-            ->latest() 
-            ->take(5) 
-            ->get();
-
-        if ($inquiries->isEmpty()) {
-            return $this->sendError('No completed package inquiries found.', [], 404);
-        }
-
-        $formattedInquiries = $inquiries->map(function ($inquiry) {
+    {
+        try {
             
-            $assignedStaffCount = 0;
-            if ($inquiry->packageInquireStaff) {
-                
-                if ($inquiry->packageInquireStaff->photographerApplication) {
-                    $assignedStaffCount++;
-                }
-                if ($inquiry->packageInquireStaff->decoratorApplication) {
-                    $assignedStaffCount++;
-                }
-                if ($inquiry->packageInquireStaff->cateringApplication) {
-                    $assignedStaffCount++;
-                }
+            $inquiries = PackageInquiry::with(['package', 'user', 'order', 'packageInquireStaff'])
+                ->whereHas('order', function ($query) {
+                    $query->where('status', 'completed');
+                })
+                ->latest() 
+                ->take(5) 
+                ->get();
+
+            if ($inquiries->isEmpty()) {
+                return $this->sendResponse('No completed package inquiries found.', []);
             }
 
-            return [
-                'event_id' => $inquiry->id,
-                'customer' => $inquiry->name,
-                'event_name' => $inquiry->package->service_title,
-                'date' => $inquiry->event_start_date . ' to ' . $inquiry->event_end_date,
-                'amount' => $inquiry->order->amount,
-                'status' => $inquiry->status,
-                'order_status' => $inquiry->order->status,
-                'assigned_staff' => $assignedStaffCount, 
-            ];
-        });
+            $formattedInquiries = $inquiries->map(function ($inquiry) {
+                
+                $assignedStaffCount = 0;
+                if ($inquiry->packageInquireStaff) {
+                    
+                    if ($inquiry->packageInquireStaff->photographerApplication) {
+                        $assignedStaffCount++;
+                    }
+                    if ($inquiry->packageInquireStaff->decoratorApplication) {
+                        $assignedStaffCount++;
+                    }
+                    if ($inquiry->packageInquireStaff->cateringApplication) {
+                        $assignedStaffCount++;
+                    }
+                }
 
-        return $this->sendResponse([
-            'inquiries' => $formattedInquiries,
-        ], 'Completed package inquiries retrieved successfully.');
-    } catch (\Exception $e) {
-        return $this->sendError('Error retrieving completed package inquiries: ' . $e->getMessage(), [], 500);
+                return [
+                    'event_id' => $inquiry->id,
+                    'customer' => $inquiry->name,
+                    'event_name' => $inquiry->package->service_title,
+                    'date' => $inquiry->event_start_date . ' to ' . $inquiry->event_end_date,
+                    'amount' => $inquiry->order->amount,
+                    'status' => $inquiry->status,
+                    'order_status' => $inquiry->order->status,
+                    'assigned_staff' => $assignedStaffCount, 
+                ];
+            });
+
+            return $this->sendResponse([
+                'inquiries' => $formattedInquiries,
+            ], 'Completed package inquiries retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving completed package inquiries: ' . $e->getMessage(), [], 500);
+        }
     }
-}
 
 
 
@@ -141,18 +141,21 @@ class PackageInquiryController extends Controller
                     $assignedStaff[] = [
                         'role' => 'Photographer',
                         'name' => $inquiry->packageInquireStaff->photographerApplication->applicant_name,
+                        'id' => $inquiry->packageInquireStaff->photographerApplication->id,
                     ];
                 }
                 if ($inquiry->packageInquireStaff->decoratorApplication) {
                     $assignedStaff[] = [
                         'role' => 'Decorator',
                         'name' => $inquiry->packageInquireStaff->decoratorApplication->applicant_name,
+                        'id' => $inquiry->packageInquireStaff->decoratorApplication->id,
                     ];
                 }
                 if ($inquiry->packageInquireStaff->cateringApplication) {
                     $assignedStaff[] = [
                         'role' => 'Catering',
                         'name' => $inquiry->packageInquireStaff->cateringApplication->applicant_name,
+                        'id' => $inquiry->packageInquireStaff->cateringApplication->id,
                     ];
                 }
             }
