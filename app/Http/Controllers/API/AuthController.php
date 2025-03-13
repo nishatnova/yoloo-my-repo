@@ -91,17 +91,17 @@ class AuthController extends Controller
             $refreshToken = JWTAuth::fromUser($user);
 
             // Store the access token in a secure cookie
-            $cookie = Cookie::make(
-                'access_token',       // Cookie name
-                $accessToken,         // Cookie value (access token)
-                2880,                 // Expiration time in minutes (2 days)
-                '/',                  // Path
-                null,                 // Domain (null = current domain)
-                true,                 // Secure (only sent over HTTPS)
-                true,                 // HttpOnly (accessible only by HTTP requests)
-                false,                // SameSite attribute
-                'Strict'              // SameSite value (options: 'Lax', 'Strict', 'None')
-            );
+            // $cookie = Cookie::make(
+            //     'access_token',       // Cookie name
+            //     $accessToken,         // Cookie value (access token)
+            //     2880,                 // Expiration time in minutes (2 days)
+            //     '/',                  // Path
+            //     null,                 // Domain (null = current domain)
+            //     true,                 // Secure (only sent over HTTPS)
+            //     true,                 // HttpOnly (accessible only by HTTP requests)
+            //     false,                // SameSite attribute
+            //     'Strict'              // SameSite value (options: 'Lax', 'Strict', 'None')
+            // );
 
 
             return $this->sendResponse([
@@ -110,7 +110,8 @@ class AuthController extends Controller
                 'token_type' => 'bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
                 'user' => auth('api')->user(),
-            ], 'Login successful.')->cookie($cookie);
+            ], 'Login successful.');
+            // ->cookie($cookie)
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError($e->validator->errors()->first(), []);
@@ -165,7 +166,7 @@ class AuthController extends Controller
             $request->validate([
                 'token' => 'required',
                 'email' => 'required|email|exists:users,email',
-                'password' => 'required|string|min:6|confirmed', // Must include `password_confirmation`
+                'password' => 'required|string|min:6|confirmed', 
             ]);
 
             // Reset the password
