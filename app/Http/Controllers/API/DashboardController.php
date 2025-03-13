@@ -42,54 +42,54 @@ class DashboardController extends Controller
                 ->sum('amount');
             $todayEarnings = floatval($todayEarnings);  
 
-            $weeklyEarnings = Order::where('status', 'Completed')
-                ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-                ->sum('amount');
-            $weeklyEarnings = floatval($weeklyEarnings); 
+            // $weeklyEarnings = Order::where('status', 'Completed')
+            //     ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            //     ->sum('amount');
+            // $weeklyEarnings = floatval($weeklyEarnings); 
 
-            $monthlyEarnings = Order::where('status', 'Completed')
-                ->whereMonth('created_at', now()->month)
-                ->sum('amount');
-            $monthlyEarnings = floatval($monthlyEarnings);  
+            // $monthlyEarnings = Order::where('status', 'Completed')
+            //     ->whereMonth('created_at', now()->month)
+            //     ->sum('amount');
+            // $monthlyEarnings = floatval($monthlyEarnings);  
 
-            $yearlyBreakdown = [];
-            for ($i = 1; $i <= 12; $i++) {
-                $yearlyBreakdown[$i] = Order::where('status', 'Completed')
-                    ->whereYear('created_at', now()->year)
-                    ->whereMonth('created_at', $i)
-                    ->sum('amount');
-                $yearlyBreakdown[$i] = floatval($yearlyBreakdown[$i]);  
-            }
-
-            
-            $dailyBreakdown = [];
-            $daysInMonth = now()->daysInMonth;
-            for ($i = 1; $i <= $daysInMonth; $i++) {
-                $dailyBreakdown[$i] = Order::where('status', 'Completed')
-                    ->whereDate('created_at', now()->year . '-' . now()->month . '-' . $i)
-                    ->sum('amount');
-                $dailyBreakdown[$i] = floatval($dailyBreakdown[$i]);  
-            }
+            // $yearlyBreakdown = [];
+            // for ($i = 1; $i <= 12; $i++) {
+            //     $yearlyBreakdown[$i] = Order::where('status', 'Completed')
+            //         ->whereYear('created_at', now()->year)
+            //         ->whereMonth('created_at', $i)
+            //         ->sum('amount');
+            //     $yearlyBreakdown[$i] = floatval($yearlyBreakdown[$i]);  
+            // }
 
             
-            $monthlyGrowth = [];
-            for ($i = 1; $i <= now()->month; $i++) {
-                $currentMonthEarnings = Order::where('status', 'Completed')
-                    ->whereYear('created_at', now()->year)
-                    ->whereMonth('created_at', $i)
-                    ->sum('amount');
-                $currentMonthEarnings = floatval($currentMonthEarnings); 
+            // $dailyBreakdown = [];
+            // $daysInMonth = now()->daysInMonth;
+            // for ($i = 1; $i <= $daysInMonth; $i++) {
+            //     $dailyBreakdown[$i] = Order::where('status', 'Completed')
+            //         ->whereDate('created_at', now()->year . '-' . now()->month . '-' . $i)
+            //         ->sum('amount');
+            //     $dailyBreakdown[$i] = floatval($dailyBreakdown[$i]);  
+            // }
 
-                $previousMonthEarnings = Order::where('status', 'Completed')
-                    ->whereYear('created_at', now()->year)
-                    ->whereMonth('created_at', $i - 1)
-                    ->sum('amount');
-                $previousMonthEarnings = floatval($previousMonthEarnings);
+            
+            // $monthlyGrowth = [];
+            // for ($i = 1; $i <= now()->month; $i++) {
+            //     $currentMonthEarnings = Order::where('status', 'Completed')
+            //         ->whereYear('created_at', now()->year)
+            //         ->whereMonth('created_at', $i)
+            //         ->sum('amount');
+            //     $currentMonthEarnings = floatval($currentMonthEarnings); 
+
+            //     $previousMonthEarnings = Order::where('status', 'Completed')
+            //         ->whereYear('created_at', now()->year)
+            //         ->whereMonth('created_at', $i - 1)
+            //         ->sum('amount');
+            //     $previousMonthEarnings = floatval($previousMonthEarnings);
 
                 
-                $growth = $previousMonthEarnings ? (($currentMonthEarnings - $previousMonthEarnings) / $previousMonthEarnings) * 100 : 0;
-                $monthlyGrowth[$i] = floatval($growth);  
-            }
+            //     $growth = $previousMonthEarnings ? (($currentMonthEarnings - $previousMonthEarnings) / $previousMonthEarnings) * 100 : 0;
+            //     $monthlyGrowth[$i] = floatval($growth);  
+            // }
 
             
             $data = [
@@ -99,11 +99,11 @@ class DashboardController extends Controller
                 'total_cancel_event' => $cancelEvents->count(),
                 'total_earning' => $totalEarnings,
                 'today_earning' => $todayEarnings,
-                'weekly_earning' => $weeklyEarnings,
-                'monthly_earning' => $monthlyEarnings,
-                'yearly_breakdown' => $yearlyBreakdown,
-                'daily_breakdown' => $dailyBreakdown,
-                'monthly_growth' => $monthlyGrowth,
+                // 'weekly_earning' => $weeklyEarnings,
+                // 'monthly_earning' => $monthlyEarnings,
+                // 'yearly_breakdown' => $yearlyBreakdown,
+                // 'daily_breakdown' => $dailyBreakdown,
+                // 'monthly_growth' => $monthlyGrowth,
             ];
 
             return $this->sendResponse($data, 'Dashboard stats retrieved successfully.');
@@ -124,12 +124,10 @@ class DashboardController extends Controller
             $yearlyBreakdown = [];
             $weeklyBreakdown = [];
 
-            // ✅ Calculate Total Revenue for the Year
             $totalYearlyAmount = Order::where('status', 'Completed')
                 ->whereYear('created_at', now()->year)
                 ->sum('amount');
 
-            // ✅ Monthly Data Calculation (Convert to Percentage)
             for ($i = 1; $i <= 12; $i++) {
                 $monthlyTotal = Order::where('status', 'Completed')
                     ->whereYear('created_at', now()->year)
@@ -146,7 +144,6 @@ class DashboardController extends Controller
                 ];
             }
 
-            // ✅ Weekly Data Calculation (Convert to Percentage)
             $currentMonth = now()->month;
             $totalMonthlyAmount = Order::where('status', 'Completed')
                 ->whereYear('created_at', now()->year)
@@ -212,7 +209,6 @@ class DashboardController extends Controller
             $monthlyEarnings = floatval($monthlyEarnings);
 
 
-            // 🎯 Calculate Percentages Against Targets
             $todayPercentage = ($dailyTarget > 0) ? round(($todayEarnings / $dailyTarget) * 100, 2) : 0;
             $weeklyPercentage = ($weeklyTarget > 0) ? round(($weeklyEarnings / $weeklyTarget) * 100, 2) : 0;
             $monthlyPercentage = ($monthlyTarget > 0) ? round(($monthlyEarnings / $monthlyTarget) * 100, 2) : 0;
