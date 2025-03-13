@@ -22,7 +22,6 @@ class AuthController extends Controller
 
     use ResponseTrait;
 
-       // Register method
     public function register(Request $request)
     {
         try {
@@ -40,7 +39,6 @@ class AuthController extends Controller
                 'role' => 'user',
             ]);
 
-
             try {
                 $data = [
                         'email' => $request->email,
@@ -50,7 +48,6 @@ class AuthController extends Controller
                 Mail::to($request->email)->send(new WelcomeEmail($data));
 
                 } catch (\Throwable $th) {
-                        // Log the error or handle it appropriately
                     Log::error("Error sending welcome email: " . $th->getMessage());
                 }
            
@@ -78,7 +75,7 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-            JWTAuth::factory()->setTTL(60); // 2 days
+            JWTAuth::factory()->setTTL(60);
 
 
             if (!$accessToken = JWTAuth::attempt($request->only('email', 'password'))) {
@@ -162,14 +159,14 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         try {
-            // Validate the input
+
             $request->validate([
                 'token' => 'required',
                 'email' => 'required|email|exists:users,email',
                 'password' => 'required|string|min:6|confirmed', 
             ]);
 
-            // Reset the password
+
             $status = Password::reset(
                 $request->only('email', 'password', 'password_confirmation', 'token'),
                 function ($user, $password) {
@@ -178,7 +175,6 @@ class AuthController extends Controller
                 }
             );
 
-            // Handle success or failure
             if ($status === Password::PASSWORD_RESET) {
                 return $this->sendResponse([], 'Password has been reset successfully.');
             }
@@ -199,13 +195,10 @@ class AuthController extends Controller
                 'new_password' => 'required|string|min:6|confirmed',
             ]);
 
-            // Check if the current password matches
             if (!Hash::check($request->current_password, auth()->user()->password)) {
                 return $this->sendError('Current password is incorrect.', []);
             }
 
-
-            // Update the password
             $user = auth()->user();
             $user->password = Hash::make($request->new_password);
             $user->save();
@@ -218,37 +211,37 @@ class AuthController extends Controller
     }
 
     public function refreshToken(Request $request)
-{
-    try {
-        // Get the refresh token from the Authorization header
-        $authorizationHeader = $request->header('Authorization');
-
-        if (!$authorizationHeader || !preg_match('/Bearer\s(\S+)/', $authorizationHeader, $matches)) {
-            return $this->sendError('Refresh token is required in the Authorization header', [], 401);
-        }
-
-        $refreshToken = $matches[1];
-
-        // Check if the refresh token is valid
+    {
         try {
-            $newToken = JWTAuth::setToken($refreshToken)->refresh();
-        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
-            return $this->sendError('Refresh token has expired. Please log in again.', [], 401);
-        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
-            return $this->sendError('Invalid refresh token.', [], 401);
-        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
-            return $this->sendError('Refresh token error: ' . $e->getMessage(), [], 401);
-        }
+            // Get the refresh token from the Authorization header
+            $authorizationHeader = $request->header('Authorization');
 
-        return $this->sendResponse([
-            'token' => $newToken,
-            'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60,
-        ], 'Token refreshed successfully.');
-    } catch (\Exception $e) {
-        return $this->sendError('Error refreshing token.', [], 500);
+            if (!$authorizationHeader || !preg_match('/Bearer\s(\S+)/', $authorizationHeader, $matches)) {
+                return $this->sendError('Refresh token is required in the Authorization header', [], 401);
+            }
+
+            $refreshToken = $matches[1];
+
+            // Check if the refresh token is valid
+            try {
+                $newToken = JWTAuth::setToken($refreshToken)->refresh();
+            } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+                return $this->sendError('Refresh token has expired. Please log in again.', [], 401);
+            } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+                return $this->sendError('Invalid refresh token.', [], 401);
+            } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+                return $this->sendError('Refresh token error: ' . $e->getMessage(), [], 401);
+            }
+
+            return $this->sendResponse([
+                'token' => $newToken,
+                'token_type' => 'bearer',
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+            ], 'Token refreshed successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error refreshing token.', [], 500);
+        }
     }
-}
 
 
     // private function generateImageUrl($path)

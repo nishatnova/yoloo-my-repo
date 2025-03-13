@@ -108,7 +108,7 @@ class TemplatePurchaseController extends Controller
                     'template_id' => $template_id,
                     'transaction_id' => $paymentIntent->id,
                     'amount' => $paymentIntent->amount_received / 100, 
-                    'date' => date('m/d/Y', $paymentIntent->created), 
+                    'date' => date('d-M-Y', $paymentIntent->created), 
                     'time' => date('H:i:s', $paymentIntent->created), 
                     'payment_method' => $paymentIntent->payment_method_types[0], 
                     'product' => $metadata['template_title'], 

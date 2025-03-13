@@ -63,7 +63,7 @@ class PackageBookingController extends Controller
                 'customer' => $customer->id,
                 'automatic_payment_methods' => [
                     'enabled' => true,  
-                    'allow_redirects' => 'never', // Avoid redirects
+                    'allow_redirects' => 'never', 
                 ],
                 'metadata' => [
                 'inquiry_id' => $inquiry->id,  
@@ -80,7 +80,7 @@ class PackageBookingController extends Controller
                 'package_id' => $package_id,
                 'package_inquiry_id' => $inquiry->id,
                 'amount' => $paymentIntent->amount / 100, 
-                'status' => 'Pending',  // Set initial status to 'pending'
+                'status' => 'Pending',  
                 'service_booked' => 'Package',
                 'stripe_payment_id' => $paymentIntent->id,
                 'stripe_customer_id' => $customer->id,
@@ -100,7 +100,7 @@ class PackageBookingController extends Controller
         }
     }
 
-    // Confirm Payment for Package Booking
+
     public function confirmPayment(Request $request, $package_id)
     {
         try {
@@ -122,7 +122,6 @@ class PackageBookingController extends Controller
             $order = Order::where('stripe_payment_id', $paymentIntent->id)->first();
 
             if ($order) {
-                // Update order status to 'completed'
                 $order->status = 'Completed';
                 $order->save();
 
@@ -131,7 +130,7 @@ class PackageBookingController extends Controller
                     'package_id' => $package_id,
                     'transaction_id' => $paymentIntent->id,
                     'amount' => $paymentIntent->amount_received / 100, 
-                    'date' => date('m/d/Y', $paymentIntent->created), 
+                    'date' => date('d-M-Y', $paymentIntent->created), 
                     'time' => date('H:i:s', $paymentIntent->created), 
                     'payment_method' => $paymentIntent->payment_method_types[0], 
                     'product' => $metadata['service_title'], 
