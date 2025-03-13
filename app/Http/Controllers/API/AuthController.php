@@ -217,33 +217,38 @@ class AuthController extends Controller
     }
 
     public function refreshToken(Request $request)
-    {
-        try {
-            // Get the refresh token from the Authorization header
-            $authorizationHeader = $request->header('Authorization');
+{
+    try {
+        // Get the refresh token from the Authorization header
+        $authorizationHeader = $request->header('Authorization');
 
-            if (!$authorizationHeader || !preg_match('/Bearer\s(\S+)/', $authorizationHeader, $matches)) {
-                return $this->sendError('Refresh token is required in the Authorization header', []);
-            }
-
-            $refreshToken = $matches[1];
-
-            // Use the refresh token to generate a new access token
-            $newToken = JWTAuth::setToken($refreshToken)->refresh();
-
-            return $this->sendResponse([
-                'token' => $newToken,
-                'token_type' => 'bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60,
-            ], 'Token refreshed successfully.');
-        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
-            return $this->sendError('Refresh token has expired', []);
-        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
-            return $this->sendError('Invalid refresh token', []);
-        } catch (\Exception $e) {
-            return $this->sendError('Error refreshing token', []);
+        if (!$authorizationHeader || !preg_match('/Bearer\s(\S+)/', $authorizationHeader, $matches)) {
+            return $this->sendError('Refresh token is required in the Authorization header', [], 401);
         }
+
+        $refreshToken = $matches[1];
+
+        // Check if the refresh token is valid
+        try {
+            $newToken = JWTAuth::setToken($refreshToken)->refresh();
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            return $this->sendError('Refresh token has expired. Please log in again.', [], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            return $this->sendError('Invalid refresh token.', [], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return $this->sendError('Refresh token error: ' . $e->getMessage(), [], 401);
+        }
+
+        return $this->sendResponse([
+            'token' => $newToken,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+        ], 'Token refreshed successfully.');
+    } catch (\Exception $e) {
+        return $this->sendError('Error refreshing token.', [], 500);
     }
+}
+
 
     // private function generateImageUrl($path)
     // {
