@@ -9,7 +9,9 @@ use App\Models\PackageImage;
 use App\Traits\ResponseTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 
 class PackageController extends Controller
 {
@@ -20,18 +22,55 @@ class PackageController extends Controller
             $activeStatus = $request->query('active_status'); 
             $limit = $request->query('limit', 10); 
             $page = $request->query('page', 1);  
-
-            $query = Package::with('images');
-
-            // Apply filters
-            if ($activeStatus !== null) {
-                $query->where('active_status', $activeStatus);
-            }
-            
-            $packages = $query->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
-
-            // Transform results to include image URLs
+    
+            // Start the query for retrieving packages, including reviews and images.
+            $query = Package::leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') // Join reviews to calculate average rating
+                            ->select(
+                                'packages.id',
+                                'packages.location',
+                                'packages.service_title',
+                                'packages.about',
+                                'packages.estate_details',
+                                'packages.included_services',
+                                'packages.price',
+                                'packages.address',
+                                'packages.email',
+                                'packages.phone',
+                                'packages.capacity',
+                                'packages.cover_image',
+                                'packages.active_status',
+                                DB::raw('AVG(reviews.rating) as average_rating'),
+                                DB::raw('COUNT(reviews.id) as review_count')
+                            )
+                            ->groupBy(
+                                'packages.id',
+                                'packages.location',
+                                'packages.service_title',
+                                'packages.about',
+                                'packages.estate_details',
+                                'packages.included_services',
+                                'packages.price',
+                                'packages.address',
+                                'packages.email',
+                                'packages.phone',
+                                'packages.capacity',
+                                'packages.cover_image',
+                                'packages.active_status'
+                            )
+                            ->orderByDesc(DB::raw('AVG(reviews.rating)')) // Sort by average rating
+                            ->paginate($limit, ['*'], 'page', $page);
+    
+            // Transform results to include image URLs and other details
+            $packages = $query; // Store the result of the query in the $packages variable
+    
+            // Transform the results
             $packages->getCollection()->transform(function ($package) {
+                // Format the average_rating to always have one decimal place
+                $averageRating = number_format($package->average_rating, 1);  // Ensures the rating is formatted as a string with one decimal place
+    
+                // Determine if this is a top package (rating >= 4.5)
+                $isTopPackage = $averageRating >= 4.5;  // Customize this as needed (e.g., 4.5 and above are considered top packages)
+    
                 return [
                     'id' => $package->id,
                     'location' => $package->location,
@@ -46,17 +85,18 @@ class PackageController extends Controller
                     'capacity' => $package->capacity,
                     'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null, 
                     'venue_photos' => $package->images->map(function ($image) {
-                    return [
-                        'image_id' => $image->id, // Add the image ID
-                        'image_url' => asset('storage/' . $image->image_path), // Add the image URL
-                    ];
-                }),
+                        return [
+                            'image_id' => $image->id,
+                            'image_url' => asset('storage/' . $image->image_path),
+                        ];
+                    }),
                     'active_status' => $package->active_status,
+                    'average_rating' => $averageRating,  // Always show with one decimal place
+                    'review_count' => $package->review_count,
+                    'is_top_package' => $isTopPackage,
                 ];
             });
-
-            // $totalPackages = $query->count();
-
+    
             return $this->sendResponse([
                 'packages' => $packages->items(),
                 'meta' => [
@@ -65,13 +105,15 @@ class PackageController extends Controller
                     'per_page' => $packages->perPage(),
                     'last_page' => $packages->lastPage(),
                 ],
-                
             ], 'Packages retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving packages: ' . $e->getMessage(), [], 500);
         }
     }
+    
 
+
+    
 
     public function store(Request $request)
     {
@@ -146,41 +188,84 @@ class PackageController extends Controller
      * Show a specific package
      */
     public function show($id)
-{
-    try {
-        // Try to find the package along with its images
-        $package = Package::with('images')->findOrFail($id);
+    {
+        try {
+            // Try to find the package along with its images and reviews
+            $package = Package::with('images')
+                ->leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') // Join reviews to calculate average rating
+                ->select(
+                    'packages.id',
+                    'packages.service_title',
+                    'packages.location',
+                    'packages.about',
+                    'packages.estate_details',
+                    'packages.included_services',
+                    'packages.price',
+                    'packages.address',
+                    'packages.email',
+                    'packages.phone',
+                    'packages.capacity',
+                    'packages.cover_image',
+                    'packages.active_status',
+                    DB::raw('AVG(reviews.rating) as average_rating'), // Calculate average rating
+                    DB::raw('COUNT(reviews.id) as review_count') // Calculate number of reviews
+                )
+                ->where('packages.id', $id)
+                ->groupBy(
+                    'packages.id',
+                    'packages.service_title',
+                    'packages.location',
+                    'packages.about',
+                    'packages.estate_details',
+                    'packages.included_services',
+                    'packages.price',
+                    'packages.address',
+                    'packages.email',
+                    'packages.phone',
+                    'packages.capacity',
+                    'packages.cover_image',
+                    'packages.active_status'
+                )
+                ->first(); // Use first() since we're only retrieving one package
 
-        // Prepare and return the response if package is found
-        return $this->sendResponse([
-            'id' => $package->id,
-            'service_title' => $package->service_title,
-            'location' => $package->location,
-            'about' => $package->about,
-            'estate_details' => $package->estate_details,
-            'included_services' => $package->included_services,
-            'price' => $package->price,
-            'address' => $package->address,
-            'email' => $package->email,
-            'phone' => $package->phone,
-            'capacity' => $package->capacity,
-            'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null, 
-            'venue_photos' => $package->images->map(function ($image) {
-                return [
-                    'image_id' => $image->id, 
-                    'image_url' => asset('storage/' . $image->image_path),
-                ];
-            }),
-            'active_status' => $package->active_status,
-        ], 'Package retrieved successfully.');
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        // Package not found error
-        return $this->sendError('Package not found.', [], 404);
-    } catch (\Exception $e) {
-        // General error handling for unexpected issues
-        return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
+            // Check if the package was found
+            if (!$package) {
+                return $this->sendError('Package not found.', [], 404);
+            }
+
+            // Transform the package data to include image URLs and review data
+            return $this->sendResponse([
+                'id' => $package->id,
+                'service_title' => $package->service_title,
+                'location' => $package->location,
+                'about' => $package->about,
+                'estate_details' => $package->estate_details,
+                'included_services' => $package->included_services,
+                'price' => $package->price,
+                'address' => $package->address,
+                'email' => $package->email,
+                'phone' => $package->phone,
+                'capacity' => $package->capacity,
+                'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null, 
+                'venue_photos' => $package->images->map(function ($image) {
+                    return [
+                        'image_id' => $image->id,
+                        'image_url' => asset('storage/' . $image->image_path),
+                    ];
+                }),
+                'active_status' => $package->active_status,
+                'average_rating' => number_format($package->average_rating, 1),  // Format the average rating
+                'review_count' => $package->review_count,
+            ], 'Package retrieved successfully.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Package not found error
+            return $this->sendError('Package not found.', [], 404);
+        } catch (\Exception $e) {
+            // General error handling for unexpected issues
+            return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
+        }
     }
-}
+
 
 
     /**
@@ -335,14 +420,23 @@ class PackageController extends Controller
     public function searchPackagePage(Request $request)
     {
         try {
-            $venue = $request->query('venue'); // Get venue search input (title)
-            $location = $request->query('location'); // Get location search input
+            $venue = $request->query('venue'); 
+            $location = $request->query('location'); 
 
             if (!$venue && !$location) {
                 return $this->sendError('Please provide a search query for venue, location, or both.', [], 400);
             }
 
-            $query = Package::query();
+            $query = Package::leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') 
+                            ->select(
+                                'packages.id',
+                                'packages.service_title',
+                                'packages.location',
+                                'packages.included_services',
+                                'packages.cover_image',
+                                DB::raw('AVG(reviews.rating) as average_rating'),
+                                DB::raw('COUNT(reviews.id) as review_count')
+                            );
 
             // If both venue & location are provided
             if ($venue && $location) {
@@ -360,13 +454,19 @@ class PackageController extends Controller
                 }
             }
 
-            // Get results with a limit of 10 (optional)
-            $packages = $query->get();
+            $packages = $query->groupBy(
+                'packages.id',
+                'packages.service_title',
+                'packages.location',
+                'packages.included_services',
+                'packages.cover_image'
+            )->get();
 
             if ($packages->isEmpty()) {
                 return $this->sendResponse([], 'No matching packages found.');
             }
 
+         
             $formattedPackages = $packages->map(function ($package) {
                 return [
                     'id' => $package->id,
@@ -374,6 +474,8 @@ class PackageController extends Controller
                     'location' => $package->location,
                     'included_services' => $package->included_services,
                     'cover_image' => $package->cover_image ? asset('storage/' . $package->cover_image) : null,
+                    'average_rating' => number_format($package->average_rating, 1), // Format the average rating to 1 decimal place
+                    'review_count' => $package->review_count,
                 ];
             });
 
@@ -387,24 +489,20 @@ class PackageController extends Controller
 
 
 
+
     public function deleteVenueImage(Request $request, $package_id, $image_id)
     {
         try {
-            // Find the package
             $package = Package::findOrFail($package_id);
 
-            // Find the image to delete
             $image = PackageImage::findOrFail($image_id);
 
-            // Check if the image belongs to the package
             if ($image->package_id !== $package->id) {
                 return $this->sendError('Image not associated with this package.', [], 400);
             }
 
-            // Delete image file from storage
             Storage::delete('public/' . $image->image_path);
 
-            // Delete the image record from the database
             $image->delete();
 
             return $this->sendResponse([], 'Venue image deleted successfully.');

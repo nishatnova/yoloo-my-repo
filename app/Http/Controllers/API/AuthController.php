@@ -357,7 +357,6 @@ class AuthController extends Controller
         }
     }
 
-
     /**
      * Remove the current profile photo.
      */
