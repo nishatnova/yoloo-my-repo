@@ -171,4 +171,64 @@ class PackageBookingController extends Controller
             return $this->sendError('Error confirming payment: ' . $e->getMessage(), [], 500);
         }
     }
+
+    public function getBookedDates(Request $request, $package_id)
+{
+    try {
+        // Validate month and year from the request
+        $validated = $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer',
+        ]);
+
+        $month = $validated['month'];
+        $year = $validated['year'];
+
+        // Determine the next month
+        $nextMonth = $month == 12 ? 1 : $month + 1;  // Wrap around to January if December
+
+        // Get all orders with the package_id that are in 'Completed' status and join with package_inquiries
+        $bookedDates = Order::join('package_inquiries', 'orders.package_inquiry_id', '=', 'package_inquiries.id')
+            ->where('orders.package_id', $package_id)
+            ->where('orders.status', 'Completed')
+            ->where(function ($query) use ($year, $month, $nextMonth) {
+                // Include bookings for the current month
+                $query->where(function ($query) use ($year, $month) {
+                    $query->whereYear('package_inquiries.event_start_date', $year)
+                        ->whereMonth('package_inquiries.event_start_date', $month)
+                        ->orWhereYear('package_inquiries.event_end_date', $year)
+                        ->whereMonth('package_inquiries.event_end_date', $month);
+                })
+                // Include bookings for the next month
+                ->orWhere(function ($query) use ($year, $nextMonth) {
+                    $query->whereYear('package_inquiries.event_start_date', $year)
+                        ->whereMonth('package_inquiries.event_start_date', $nextMonth)
+                        ->orWhereYear('package_inquiries.event_end_date', $year)
+                        ->whereMonth('package_inquiries.event_end_date', $nextMonth);
+                });
+            })
+            ->get(['package_inquiries.event_start_date', 'package_inquiries.event_end_date']);
+
+        // Prepare the booked dates response
+        $bookedDatesArray = $bookedDates->map(function ($booking) {
+            return [
+                'startdate' => \Carbon\Carbon::parse($booking->event_start_date)->format('d.m.Y'),
+                'enddate' => \Carbon\Carbon::parse($booking->event_end_date)->format('d.m.Y'),
+            ];
+        });
+
+        // Check if no dates are found
+        if ($bookedDatesArray->isEmpty()) {
+            return $this->sendResponse([], 'No bookings found for the selected month and next month.');
+        }
+
+        return $this->sendResponse($bookedDatesArray, 'Booked dates retrieved successfully.');
+    } catch (\Exception $e) {
+        return $this->sendError('Error retrieving booked dates: ' . $e->getMessage(), [], 500);
+    }
+}
+
+
+    
+
 }

@@ -77,6 +77,8 @@ use App\Http\Controllers\API\DashboardController;
     Route::get('/dashboard-graph', [DashboardController::class, 'getDashboardGraphData']);
     Route::get('/dashboard-period', [DashboardController::class, 'getEarningsData']);
 
+    Route::get('/package/{package_id}/booked-dates', [PackageBookingController::class, 'getBookedDates']);
+
 
 
 
