@@ -114,6 +114,32 @@ class ReviewController extends Controller
         }
     }
 
+    public function getActiveReviews()
+    {
+        try {
+            $reviews = Review::with(['user', 'package', 'order'])
+                            ->where('status', 1)
+                            ->get(); 
+    
+            $reviews->transform(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'user_name' => $review->user->name,
+                    'user_profile_photo' => $review->user->profile_photo ? asset('storage/' . $review->user->profile_photo) : null, 
+                    'rating' => $review->rating,
+                    'comment' => $review->comment,
+                    'status' => $review->status,
+                ];
+            });
+    
+            return $this->sendResponse([
+                'reviews' => $reviews,
+            ], 'Active reviews for the package retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving top 3 highest rated active reviews: ' . $e->getMessage(), [], 500);
+        }
+    }
+
     public function getPackageReviews($package_id)
     {
         try {

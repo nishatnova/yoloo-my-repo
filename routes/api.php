@@ -58,6 +58,7 @@ use App\Http\Controllers\API\DashboardController;
     Route::get('/packages/{id}/show-review', [ReviewController::class, 'reviewShow']);
     Route::get('/package-reviews/{package_id}', [ReviewController::class, 'getPackageReviews']);
     Route::get('/reviews', [ReviewController::class, 'getAllReviews']);
+    Route::get('/active-reviews', [ReviewController::class, 'getActiveReviews']);
     Route::get('/reviews/{review_id}', [ReviewController::class, 'getReviewDetails']);
 
     Route::get('/job-posts', [JobPostController::class, 'index']);
