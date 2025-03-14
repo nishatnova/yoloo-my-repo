@@ -18,8 +18,19 @@ class TemplatePurchaseController extends Controller
     public function initiatePayment(Request $request, $template_id)
     {
         try {
-            $template = Template::findOrFail($template_id);
+            
             $user = Auth::user();
+            $existingOrder = Order::where('user_id', $user->id)
+            ->where('template_id', $template_id)
+            ->where('status', 'Completed')
+            ->first();
+
+            if ($existingOrder) {
+            return $this->sendError('You have already purchased this template.', [], 400);
+            }
+
+            $template = Template::findOrFail($template_id);
+
 
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -60,7 +71,7 @@ class TemplatePurchaseController extends Controller
                 'metadata' => json_encode($paymentIntent->metadata),
             ]);
             
-            
+
             return $this->sendResponse([
                 'order_id' => $order->id,
                 'payment_intent_id' => $paymentIntent->id,
