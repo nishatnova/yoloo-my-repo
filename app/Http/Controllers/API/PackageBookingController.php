@@ -34,6 +34,15 @@ class PackageBookingController extends Controller
             $package = Package::findOrFail($package_id);
             $user = Auth::user();
 
+            $existingOrder = Order::where('user_id', $user->id)
+            ->where('package_id', $package->id)
+            ->where('status', 'Completed')
+            ->first();
+
+            if ($existingOrder) {
+                return $this->sendError('You have already purchased this package.', [], 400);
+            }
+
             $inquiry = PackageInquiry::create([
                 'user_id' => $user->id,
                 'package_id' => $package->id,
