@@ -34,6 +34,24 @@ class PackageBookingController extends Controller
             $package = Package::findOrFail($package_id);
             $user = Auth::user();
 
+            // Check for overlapping bookings for the same package in the given date range
+            $existingBooking = Order::join('package_inquiries', 'orders.package_inquiry_id', '=', 'package_inquiries.id') 
+                ->where('orders.package_id', $package->id)
+                ->where('orders.status', 'Completed')
+                ->where(function ($query) use ($validated) {
+                    $query->whereBetween('package_inquiries.event_start_date', [$validated['event_start_date'], $validated['event_end_date']])
+                        ->orWhereBetween('package_inquiries.event_end_date', [$validated['event_start_date'], $validated['event_end_date']])
+                        ->orWhere(function ($query) use ($validated) {
+                            $query->where('package_inquiries.event_start_date', '<=', $validated['event_start_date'])
+                                    ->where('package_inquiries.event_end_date', '>=', $validated['event_end_date']);
+                        });
+                })
+                ->exists();
+
+            if ($existingBooking) {
+                return $this->sendError('This package is already booked for the selected dates.', [], 400);
+            }
+
             $existingOrder = Order::where('user_id', $user->id)
             ->where('package_id', $package->id)
             ->where('status', 'Completed')
@@ -62,34 +80,34 @@ class PackageBookingController extends Controller
                 'email' => $user->email,
                 'name' => $user->name,
                 'metadata' => [
-                    'user_id' => $user->id, 
+                    'user_id' => $user->id,
                 ],
             ]);
 
             $paymentIntent = PaymentIntent::create([
-                'amount' => $package->price * 100, 
+                'amount' => $package->price * 100,
                 'currency' => 'usd',
                 'customer' => $customer->id,
                 'automatic_payment_methods' => [
-                    'enabled' => true,  
-                    'allow_redirects' => 'never', 
+                    'enabled' => true,
+                    'allow_redirects' => 'never',
                 ],
                 'metadata' => [
-                'inquiry_id' => $inquiry->id,  
-                'package_id' => $package->id,
-                'service_title' => $package->service_title,
-                'user_id' => $user->id,
-                'user_name' => $inquiry->name,
-                'user_email' => $inquiry->email,
-            ]
+                    'inquiry_id' => $inquiry->id,
+                    'package_id' => $package->id,
+                    'service_title' => $package->service_title,
+                    'user_id' => $user->id,
+                    'user_name' => $inquiry->name,
+                    'user_email' => $inquiry->email,
+                ]
             ]);
 
             $order = Order::create([
                 'user_id' => $user->id,
                 'package_id' => $package_id,
                 'package_inquiry_id' => $inquiry->id,
-                'amount' => $paymentIntent->amount / 100, 
-                'status' => 'Pending',  
+                'amount' => $paymentIntent->amount / 100,
+                'status' => 'Pending',
                 'service_booked' => 'Package',
                 'stripe_payment_id' => $paymentIntent->id,
                 'stripe_customer_id' => $customer->id,

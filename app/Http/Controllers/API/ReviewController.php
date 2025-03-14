@@ -251,15 +251,6 @@ class ReviewController extends Controller
             return $this->sendError('Error retrieving package: ' . $e->getMessage(), [], 500);
         }
     }
-
-
-
-
-    
-
-
-
-
     
 
     
