@@ -60,7 +60,7 @@ class TemplatePurchaseController extends Controller
                 'metadata' => json_encode($paymentIntent->metadata),
             ]);
             
-
+            
             return $this->sendResponse([
                 'order_id' => $order->id,
                 'payment_intent_id' => $paymentIntent->id,
