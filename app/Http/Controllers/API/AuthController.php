@@ -261,11 +261,15 @@ class AuthController extends Controller
                 return $this->sendError('User not found.', [], 404);
             }
 
+            $profilePhotoUrl = $user->profile_photo
+            ? asset('storage/' . $user->profile_photo)
+            : asset('storage/profile_photos/user.png');
+
             return $this->sendResponse([
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'profile_photo' => $user->profile_photo ? asset('storage/' . $user->profile_photo) : null,
+                'profile_photo' => $profilePhotoUrl,
                 'role' => $user->role,
             ], 'User profile retrieved successfully.');
         } catch (\Exception $e) {
@@ -288,7 +292,7 @@ class AuthController extends Controller
 
             $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email,' . $id,
+                'email' => 'nullable|email|unique:users,email,' . $id,
             ]);
 
             $user->update([

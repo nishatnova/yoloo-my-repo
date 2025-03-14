@@ -125,7 +125,9 @@ class ReviewController extends Controller
                 return [
                     'id' => $review->id,
                     'user_name' => $review->user->name,
-                    'user_profile_photo' => $review->user->profile_photo ? asset('storage/' . $review->user->profile_photo) : null, 
+                    'user_profile_photo' => $review->user->profile_photo
+                    ? asset('storage/' . $review->user->profile_photo)
+                    : asset('storage/profile_photos/user.png'),  
                     'rating' => $review->rating,
                     'comment' => $review->comment,
                     'status' => $review->status,
@@ -154,6 +156,9 @@ class ReviewController extends Controller
                 return [
                     'id' => $review->id,
                     'user_name' => $review->user->name,
+                    'user_profile_photo' => $review->user->profile_photo
+                    ? asset('storage/' . $review->user->profile_photo)
+                    : asset('storage/profile_photos/user.png'), 
                     'package_name' => $review->package->service_title,
                     'rating' => $review->rating,
                     'comment' => $review->comment,
