@@ -291,18 +291,28 @@ class AuthController extends Controller
             }
 
             $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'nullable|email|unique:users,email,' . $id,
+                'name' => 'nullable|string|max:255', 
+                'email' => 'nullable|email|unique:users,email,' . $id,  
             ]);
 
-            $user->update([
-                'name' => $request->name,
-                'email' => $request->email,
-            ]);
+            $data = [];
+
+            if ($request->has('name') && $request->name !== null) {
+                $data['name'] = $request->name;
+            }
+
+            if ($request->has('email') && $request->email !== null) {
+                $data['email'] = $request->email;
+            }
+
+            if (!empty($data)) {
+                $user->update($data);
+            }
 
             return $this->sendResponse([
                 'user' => $user,
             ], 'Profile updated successfully.');
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError($e->validator->errors()->first(), [], 400);
         } catch (\Exception $e) {
@@ -310,6 +320,7 @@ class AuthController extends Controller
             return $this->sendError('Error updating profile.' . $e->getMessage(), [], 500);
         }
     }
+
     /**
      * Upload a new profile photo.
      */
@@ -326,15 +337,13 @@ class AuthController extends Controller
                 'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
-            // Delete old profile photo if exists
             if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
                 Storage::disk('public')->delete($user->profile_photo);
             }
 
-            // Store the new profile photo in the 'public' disk
             $filePath = $request->file('profile_photo')->store('profile_photos', 'public');
 
-            // Update user's profile photo path
+
             $user->update(['profile_photo' => $filePath]);
 
             return $this->sendResponse([
@@ -365,7 +374,6 @@ class AuthController extends Controller
                 return $this->sendError('No profile photo to delete.', [], 404);
             }
 
-            // Delete the profile photo
             Storage::disk('public')->delete($user->profile_photo);
             $user->update(['profile_photo' => null]);
 
