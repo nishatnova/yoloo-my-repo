@@ -17,31 +17,34 @@ class JobPostController extends Controller
     public function index(Request $request)
     {
         try {
-
+            // Update expired jobs' status to Inactive
             $expiredJobs = JobPost::where('status', 'Active')
-            ->where('application_deadline', '<', Carbon::now())
-            ->update(['status' => 'Inactive']);
-        
+                ->where('application_deadline', '<', Carbon::now())
+                ->update(['status' => 'Inactive']);
+            
+            // Fetch query parameters
             $activeStatus = $request->query('status'); 
+            $role = $request->query('role');  // Get the role from the request
             $limit = $request->query('limit', 10); 
             $page = $request->query('page', 1); 
-           
-           
 
+            // Start the query for job posts
             $query = JobPost::query();
 
             // Apply filters
             if ($activeStatus !== null) {
                 $query->where('status', $activeStatus);
             }
-            // if ($title) {
-            //     $query->where('title', 'like', '%' . $title . '%');
-            // }
-           
-            // Fetch paginated results
+
+            // Apply the role filter if provided
+            if ($role) {
+                $query->where('role', 'LIKE', "%$role%");
+            }
+
+            // Get the jobs with pagination
             $jobs = $query->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
 
-            // Transform results to include image URLs
+            // Transform the results
             $jobs->getCollection()->transform(function ($job) {
                 return [
                     'id' => $job->id,
@@ -59,8 +62,6 @@ class JobPostController extends Controller
                 ];
             });
 
-            // $totalPackages = $query->count();
-
             return $this->sendResponse([
                 'jobs' => $jobs->items(),
                 'meta' => [
@@ -69,12 +70,12 @@ class JobPostController extends Controller
                     'per_page' => $jobs->perPage(),
                     'last_page' => $jobs->lastPage(),
                 ],
-                
             ], 'Job Posts retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving job posts: ' . $e->getMessage(), [], 500);
         }
     }
+
 
 
     public function store(Request $request)
