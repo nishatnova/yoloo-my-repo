@@ -138,7 +138,7 @@ class JobPostController extends Controller
                 'job_title' => $job->job_title,
                 'role' => $job->role,
                 'about_job' => $job->about_job,
-                'responsibilities' => $job->responsibilities, // Full estate details array
+                'responsibilities' => $job->responsibilities, 
                 'requirements' => $job->requirements,
                 'budget' => $job->budget,
                 'location' => $job->location,
@@ -154,16 +154,18 @@ class JobPostController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            // Check if the user is an admin
             if (Auth::user()->role !== 'admin') {
                 return $this->sendError('Access denied. Only admins can update packages.', [], 403);
             }
 
+            // Validate the incoming request data
             $validated = $request->validate([
                 'job_title' => 'required|string',
                 'role' => 'required|string',
                 'about_job' => 'nullable|string',
-                'responsibilities' => 'nullable|string', 
-                'requirements' => 'nullable|string', 
+                'responsibilities' => 'nullable|string',
+                'requirements' => 'nullable|string',
                 'budget' => 'required|numeric|min:0',
                 'location' => 'nullable|string',
                 'application_deadline' => 'nullable|date',
@@ -171,7 +173,6 @@ class JobPostController extends Controller
                 'status' => 'required|in:Active,Inactive',
             ]);
 
-            // Decode JSON fields to array if provided
             if (isset($validated['responsibilities'])) {
                 $validated['responsibilities'] = json_decode($validated['responsibilities'], true);
             }
@@ -179,25 +180,26 @@ class JobPostController extends Controller
                 $validated['requirements'] = json_decode($validated['requirements'], true);
             }
 
-            // Find the package
             $job = JobPost::findOrFail($id);
 
-            // **Fix Cover Image Issue**
-            if ($request->hasFile('cover_image')) {
-                // Store new image and update path correctly
-                $coverImagePath = $request->file('cover_image')->store('packages', 'public');
-                $validated['cover_image'] = $coverImagePath; // Add to validated array
+            if ($validated['status'] == 'Active' && Carbon::parse($validated['application_deadline'])->isPast()) {
+                return $this->sendError('Application deadline has passed. The status cannot be set to Active.', [], 400);
             }
 
-            // Update package
+            if ($request->hasFile('cover_image')) {
+                $coverImagePath = $request->file('cover_image')->store('packages', 'public');
+                $validated['cover_image'] = $coverImagePath; 
+            }
+
             $job->update($validated);
 
+            // Return the updated job post
             return $this->sendResponse([
                 'id' => $job->id,
                 'job_title' => $job->job_title,
                 'role' => $job->role,
                 'about_job' => $job->about_job,
-                'responsibilities' => $job->responsibilities, // Full estate details array
+                'responsibilities' => $job->responsibilities,
                 'requirements' => $job->requirements,
                 'budget' => $job->budget,
                 'location' => $job->location,
@@ -205,12 +207,14 @@ class JobPostController extends Controller
                 'cover_image' => $job->cover_image ? asset('storage/' . $job->cover_image) : null,
                 'status' => $job->status,
             ], 'Job Post updated successfully.');
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
         } catch (\Exception $e) {
-            return $this->sendError('Error updating package: ' . $e->getMessage(), [], 500);
+            return $this->sendError('Error updating job post: ' . $e->getMessage(), [], 500);
         }
     }
+
 
     public function destroy($id)
     {
