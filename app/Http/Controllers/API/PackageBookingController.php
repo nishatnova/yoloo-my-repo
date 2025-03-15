@@ -52,14 +52,6 @@ class PackageBookingController extends Controller
                 return $this->sendError('This package is already booked for the selected dates.', [], 400);
             }
 
-            $existingOrder = Order::where('user_id', $user->id)
-            ->where('package_id', $package->id)
-            ->where('status', 'Completed')
-            ->first();
-
-            if ($existingOrder) {
-                return $this->sendError('You have already purchased this package.', [], 400);
-            }
 
             $inquiry = PackageInquiry::create([
                 'user_id' => $user->id,
@@ -175,52 +167,36 @@ class PackageBookingController extends Controller
     public function getBookedDates(Request $request, $package_id)
     {
         try {
-            $validated = $request->validate([
-                'month' => 'required|integer|min:1|max:12',
-                'year' => 'required|integer',
-            ]);
-
-            $month = $validated['month'];
-            $year = $validated['year'];
-
-            $nextMonth = $month == 12 ? 1 : $month + 1;  
+            $package = Package::findOrFail($package_id);  
+    
             $bookedDates = Order::join('package_inquiries', 'orders.package_inquiry_id', '=', 'package_inquiries.id')
                 ->where('orders.package_id', $package_id)
                 ->where('orders.status', 'Completed')
-                ->where(function ($query) use ($year, $month, $nextMonth) {
-                    $query->where(function ($query) use ($year, $month) {
-                        $query->whereYear('package_inquiries.event_start_date', $year)
-                            ->whereMonth('package_inquiries.event_start_date', $month)
-                            ->orWhereYear('package_inquiries.event_end_date', $year)
-                            ->whereMonth('package_inquiries.event_end_date', $month);
-                    })
-                    ->orWhere(function ($query) use ($year, $nextMonth) {
-                        $query->whereYear('package_inquiries.event_start_date', $year)
-                            ->whereMonth('package_inquiries.event_start_date', $nextMonth)
-                            ->orWhereYear('package_inquiries.event_end_date', $year)
-                            ->whereMonth('package_inquiries.event_end_date', $nextMonth);
-                    });
-                })
                 ->get(['package_inquiries.event_start_date', 'package_inquiries.event_end_date']);
-
-            $bookedDatesArray = $bookedDates->map(function ($booking) {
-                return [
-                    'startdate' => \Carbon\Carbon::parse($booking->event_start_date)->format('d.m.Y'),
-                    'enddate' => \Carbon\Carbon::parse($booking->event_end_date)->format('d.m.Y'),
-                ];
+    
+            $bookedDatesArray = $bookedDates->flatMap(function ($booking) {
+                $startDate = \Carbon\Carbon::parse($booking->event_start_date);
+                $endDate = \Carbon\Carbon::parse($booking->event_end_date);
+                $dates = [];
+    
+                while ($startDate <= $endDate) {
+                    $dates[] =  $startDate->format('Y-m-d');
+                    $startDate->addDay(); 
+                }
+    
+                return $dates;
             });
-
+    
+            // Check if no dates are found
             if ($bookedDatesArray->isEmpty()) {
-                return $this->sendResponse([], 'No bookings found for the selected month and next month.');
+                return $this->sendResponse([], 'No bookings found for the selected package.');
             }
-
+    
             return $this->sendResponse($bookedDatesArray, 'Booked dates retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving booked dates: ' . $e->getMessage(), [], 500);
         }
     }
 
-
-    
 
 }
