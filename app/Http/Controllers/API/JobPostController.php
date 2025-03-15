@@ -45,17 +45,17 @@ class JobPostController extends Controller
             $jobs->getCollection()->transform(function ($job) {
                 return [
                     'id' => $job->id,
-                    'Job ID' => $job->id,
-                    'Location' => $job->location,
-                    'Job Title' => $job->job_title,                   
-                    'Budget' => $job->budget,
-                    'Role' => $job->role,
-                    'About Job' => $job->about_job,
-                    'Responsibilities' => $job->responsibilities,
-                    'Requirements' => $job->requirements,
-                    'Deadline' => $job->application_deadline,
-                    'Image' => $job->cover_image ? asset('storage/' . $job->cover_image) : null, 
-                    'Status' => $job->status,
+                    'job_id' => $job->id,
+                    'location' => $job->location,
+                    'job_title' => $job->job_title,                   
+                    'budget' => $job->budget,
+                    'role' => $job->role,
+                    'about_job' => $job->about_job,
+                    'responsibilities' => $job->responsibilities,
+                    'requirements' => $job->requirements,
+                    'deadline' => $job->application_deadline,
+                    'image' => $job->cover_image ? asset('storage/' . $job->cover_image) : null, 
+                    'status' => $job->status,
                 ];
             });
 
