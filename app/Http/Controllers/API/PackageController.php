@@ -420,53 +420,75 @@ class PackageController extends Controller
     public function searchPackagePage(Request $request)
     {
         try {
+            // Fetch query parameters
             $venue = $request->query('venue'); 
             $location = $request->query('location'); 
+            $limit = $request->query('limit', 10);  // Default to 10 items per page
+            $page = $request->query('page', 1);  // Default to first page
 
+            // If neither venue nor location is provided, show all active packages
             if (!$venue && !$location) {
-                return $this->sendError('Please provide a search query for venue, location, or both.', [], 400);
-            }
-
-            $query = Package::leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') 
-                            ->select(
-                                'packages.id',
-                                'packages.service_title',
-                                'packages.location',
-                                'packages.included_services',
-                                'packages.cover_image',
-                                DB::raw('AVG(reviews.rating) as average_rating'),
-                                DB::raw('COUNT(reviews.id) as review_count')
-                            );
-
-            // If both venue & location are provided
-            if ($venue && $location) {
-                $query->where('service_title', 'LIKE', "%$venue%")
-                    ->where('location', 'LIKE', "%$location%");
+                $query = Package::leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') 
+                    ->select(
+                        'packages.id',
+                        'packages.service_title',
+                        'packages.location',
+                        'packages.included_services',
+                        'packages.cover_image',
+                        DB::raw('AVG(reviews.rating) as average_rating'),
+                        DB::raw('COUNT(reviews.id) as review_count')
+                    )
+                    ->groupBy(
+                        'packages.id', 
+                        'packages.service_title',
+                        'packages.location',
+                        'packages.included_services',
+                        'packages.cover_image'
+                    );
             } else {
-                // If only venue is provided
-                if ($venue) {
-                    $query->where('service_title', 'LIKE', "%$venue%");
-                }
+                // If venue or location is provided, perform search based on the filters
+                $query = Package::leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') 
+                    ->select(
+                        'packages.id',
+                        'packages.service_title',
+                        'packages.location',
+                        'packages.included_services',
+                        'packages.cover_image',
+                        DB::raw('AVG(reviews.rating) as average_rating'),
+                        DB::raw('COUNT(reviews.id) as review_count')
+                    );
 
-                // If only location is provided
-                else {
-                    $query->where('location', 'LIKE', "%$location%");
+                // If both venue & location are provided
+                if ($venue && $location) {
+                    $query->where('service_title', 'LIKE', "%$venue%")
+                        ->where('location', 'LIKE', "%$location%");
+                } else {
+                    // If only venue is provided
+                    if ($venue) {
+                        $query->where('service_title', 'LIKE', "%$venue%");
+                    }
+
+                    // If only location is provided
+                    else {
+                        $query->where('location', 'LIKE', "%$location%");
+                    }
                 }
             }
 
+            // Apply pagination
             $packages = $query->groupBy(
                 'packages.id',
                 'packages.service_title',
                 'packages.location',
                 'packages.included_services',
                 'packages.cover_image'
-            )->get();
+            )->paginate($limit, ['*'], 'page', $page);
 
             if ($packages->isEmpty()) {
                 return $this->sendResponse([], 'No matching packages found.');
             }
 
-         
+            // Format the results
             $formattedPackages = $packages->map(function ($package) {
                 return [
                     'id' => $package->id,
@@ -479,13 +501,24 @@ class PackageController extends Controller
                 ];
             });
 
-            return $this->sendResponse($formattedPackages, 'Search results retrieved successfully.');
+            // Return the paginated results along with meta data for pagination
+            return $this->sendResponse([
+                'packages' => $formattedPackages,
+                'meta' => [
+                    'current_page' => $packages->currentPage(),
+                    'total' => $packages->total(),
+                    'per_page' => $packages->perPage(),
+                    'last_page' => $packages->lastPage(),
+                ],
+            ], 'Search results retrieved successfully.');
+
         } catch (\Illuminate\Database\QueryException $e) {
-            return $this->sendError('Database error occurred. Please try again later.', [], 500);
+            return $this->sendError('Database error occurred. Please try again later.' . $e->getMessage(), [], 500);
         } catch (\Exception $e) {
             return $this->sendError('An unexpected error occurred: ' . $e->getMessage(), [], 500);
         }
     }
+
 
 
 
