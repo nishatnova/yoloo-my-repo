@@ -292,7 +292,7 @@ class AuthController extends Controller
 
             $request->validate([
                 'name' => 'nullable|string|max:255', 
-                'email' => 'nullable|email|unique:users,email,' . $id,  
+                'email' => 'nullable|email|unique:users,email,' . $user->id,  
             ]);
 
             $data = [];
