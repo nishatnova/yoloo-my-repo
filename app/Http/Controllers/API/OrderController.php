@@ -33,9 +33,9 @@ class OrderController extends Controller
                 return [
                     'order_id' => $order->id,
                     'service_booked' => $order->service_booked,
-                    'date' => $order->created_at->format('Y-M-d'),
+                    'booking_date' => $order->created_at->format('Y-M-d'),
                     'status' => $order->status,
-                    'amount' => $order->amount,
+                    'amount' => intval($order->amount),
                 ];
             });
     

@@ -49,7 +49,7 @@ class JobApplicationController extends Controller
 
         return $this->sendResponse([
             'application' => $application,
-        ], 'Job Post created successfully.');
+        ], 'Job Applied Successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
         } catch (\Exception $e) {
