@@ -107,10 +107,10 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     
     Route::post('/add-review/{package_id}', [ReviewController::class, 'storeReview']);
     
-    Route::get('admin/profile', [AuthController::class, 'getProfile']);
-    Route::post('admin/profile', [AuthController::class, 'updateProfile']);
-    Route::post('admin/profile/photo', [AuthController::class, 'uploadProfilePhoto']);
-    Route::delete('admin/profile/photo', [AuthController::class, 'removeProfilePhoto']);
+    Route::get('user/profile', [AuthController::class, 'getProfile']);
+    Route::post('user/profile', [AuthController::class, 'updateProfile']);
+    Route::post('user/profile/photo', [AuthController::class, 'uploadProfilePhoto']);
+    Route::delete('user/profile/photo', [AuthController::class, 'removeProfilePhoto']);
 
     
 
