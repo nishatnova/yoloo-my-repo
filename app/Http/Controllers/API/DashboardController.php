@@ -171,7 +171,7 @@ class DashboardController extends Controller
 
                 $weeklyBreakdown[] = [
                     'period' => $weekName,
-                    'value' => $percentage // Convert to percentage
+                    'value' => $percentage 
                 ];
             }
 
@@ -207,7 +207,6 @@ class DashboardController extends Controller
                 ->whereMonth('created_at', now()->month)
                 ->sum('amount');
             $monthlyEarnings = floatval($monthlyEarnings);
-
 
             $todayPercentage = ($dailyTarget > 0) ? round(($todayEarnings / $dailyTarget) * 100, 2) : 0;
             $weeklyPercentage = ($weeklyTarget > 0) ? round(($weeklyEarnings / $weeklyTarget) * 100, 2) : 0;

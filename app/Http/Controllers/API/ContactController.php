@@ -37,7 +37,7 @@ class ContactController extends Controller
 
         } catch (ValidationException $e) {
             $errors = $e->errors();
-
+            
             // Get the first error message for each field
             $firstErrorMessages = collect($errors)->map(fn($messages) => $messages[0])->implode(', ');
             return $this->sendError($firstErrorMessages, [], 422);

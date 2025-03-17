@@ -83,7 +83,6 @@ class AuthController extends Controller
             }
             $user = auth()->user();
 
-            // Generate the refresh token
             JWTAuth::factory()->setTTL(20160); // Refresh token valid for 30 days
             $refreshToken = JWTAuth::fromUser($user);
 
