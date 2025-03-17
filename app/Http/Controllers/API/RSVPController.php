@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Traits\ResponseTrait;
 use App\Models\RSVP;
+use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -12,20 +13,28 @@ class RSVPController extends Controller
 {
     use ResponseTrait;
 
-    public function submitRSVP(Request $request, $order_id, $template_id)
+    public function submitRSVP(Request $request, $order_id)
     {
         try {
+            // Validate the incoming request data
             $validated = $request->validate([
                 'guest_name' => 'required|string',
                 'guest_email' => 'required|email',
                 'guest_phone' => 'required|string',
                 'bring_guests' => 'nullable|string',
                 'attendance' => 'required',
-                
             ]);
 
+            // Decode the bring_guests field if provided
             $validated['bring_guests'] = json_decode($validated['bring_guests'], true);
 
+            // Find the order by order_id to get the associated template_id
+            $order = Order::findOrFail($order_id); // Get the order using the provided order_id
+
+            // Get the template_id from the order
+            $template_id = $order->template_id;
+
+            // Create the RSVP record
             $rsvp = RSVP::create([
                 'order_id' => $order_id,
                 'template_id' => $template_id,
@@ -36,9 +45,9 @@ class RSVPController extends Controller
                 'attendance' => $validated['attendance'],
             ]);
 
+            // Return the successful response
             return $this->sendResponse($rsvp, 'RSVP submitted successfully.');
-        }
-        catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
         } catch (\Exception $e) {
             return $this->sendError('Error submitting RSVP: ' . $e->getMessage(), [], 500);

@@ -66,9 +66,9 @@ use App\Http\Controllers\API\DashboardController;
 
     Route::post('/contact-us', [ContactController::class, 'store']);
 
-    Route::get('/template/{order_id}/{template_id}/preview-custom-template', [CustomTemplateContentController::class, 'previewCustomTemplate']);
+    Route::get('/template/preview-custom-template/{template_id}', [CustomTemplateContentController::class, 'previewCustomTemplate']);
 
-    Route::post('/template/{order_id}/{template_id}/rsvp', [RSVPController::class, 'submitRSVP']);
+    Route::post('/template/{order_id}/rsvp', [RSVPController::class, 'submitRSVP']);
 
     Route::get('/template/{order_id}/rsvp-list', [RSVPController::class, 'getRSVPList']);
     Route::get('/rsvp/{rsvp_id}', [RSVPController::class, 'getRSVPDetails']);

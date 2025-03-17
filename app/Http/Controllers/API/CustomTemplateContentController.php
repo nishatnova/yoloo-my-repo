@@ -83,31 +83,33 @@ class CustomTemplateContentController extends Controller
         }
     }
 
-    public function previewCustomTemplate(Request $request, $order_id, $template_id)
+    public function previewCustomTemplate(Request $request, $template_id)
     {
         try {
-            // For authenticated user (optional)
+            // For authenticated user
             if (Auth::check()) {
                 // Get the user's order for the given template_id
                 $order = Order::where('user_id', Auth::id())
-                            ->where('id', $order_id)
-                            ->where('template_id', $template_id)
-                            ->first();
-
+                              ->where('template_id', $template_id)
+                              ->first();
+    
                 if (!$order) {
                     return $this->sendError('You have not purchased this template or the order does not exist.', [], 403);
                 }
+            } else {
+                // If the user is not authenticated, return an error or handle as needed
+                return $this->sendError('User not authenticated.', [], 401);
             }
-
-            // Retrieve the custom content for the template using both order_id and template_id
-            $customContent = CustomTemplateContent::where('order_id', $order_id)
-                                                ->where('template_id', $template_id)
-                                                ->first();
-
+    
+            // Retrieve the custom content for the template using order_id and template_id
+            $customContent = CustomTemplateContent::where('order_id', $order->id)
+                                                 ->where('template_id', $template_id)
+                                                 ->first();
+    
             if (!$customContent) {
                 return $this->sendError('Custom content not found. Please update the content first.', [], 404);
             }
-
+    
             // Prepare the preview data
             $previewData = [
                 'welcome_message' => $customContent->welcome_message,
@@ -120,17 +122,18 @@ class CustomTemplateContentController extends Controller
                 'wedding_date' => Carbon::parse($customContent->wedding_date)->format('Y-m-d'),
                 'wedding_time' => $customContent->wedding_time,
                 'city' => $customContent->city,
-                'order_id' => $customContent->order_id,
                 'template_id' => $customContent->template_id,
+                'order_id' => $customContent->order_id,
             ];
-
+    
             // Return the preview response
             return $this->sendResponse($previewData, 'Template preview retrieved successfully.');
-
+    
         } catch (\Exception $e) {
             return $this->sendError('Error fetching template preview: ' . $e->getMessage(), [], 500);
         }
     }
+    
 
 
 }
