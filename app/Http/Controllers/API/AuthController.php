@@ -252,10 +252,10 @@ class AuthController extends Controller
 
     // }
 
-    public function getProfile($id)
+    public function getProfile(Request $request)
     {
         try {
-            $user = User::find($id);
+            $user = User::find(Auth::id());
 
             if (!$user) {
                 return $this->sendError('User not found.', [], 404);
@@ -281,10 +281,10 @@ class AuthController extends Controller
     /**
      * Update user's name and email.
      */
-    public function updateProfile(Request $request, $id)
+    public function updateProfile(Request $request)
     {
         try {
-            $user = User::find($id);
+            $user = User::find(Auth::id());
 
             if (!$user) {
                 return $this->sendError('User not found.', [], 404);
@@ -324,10 +324,10 @@ class AuthController extends Controller
     /**
      * Upload a new profile photo.
      */
-    public function uploadProfilePhoto(Request $request, $id)
+    public function uploadProfilePhoto(Request $request)
     {
         try {
-            $user = User::find($id);
+            $user = User::find(Auth::id());
 
             if (!$user) {
                 return $this->sendError('User not found.', [], 404);
@@ -360,10 +360,10 @@ class AuthController extends Controller
     /**
      * Remove the current profile photo.
      */
-    public function removeProfilePhoto($id)
+    public function removeProfilePhoto(Request $request)
     {
         try {
-            $user = User::find($id);
+            $user = User::find(Auth::id());
 
             if (!$user) {
                 return $this->sendError('User not found.', [], 404);

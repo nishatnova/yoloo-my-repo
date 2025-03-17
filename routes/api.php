@@ -107,7 +107,10 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     
     Route::post('/add-review/{package_id}', [ReviewController::class, 'storeReview']);
     
-    
+    Route::get('admin/profile', [AuthController::class, 'getProfile']);
+    Route::post('admin/profile', [AuthController::class, 'updateProfile']);
+    Route::post('admin/profile/photo', [AuthController::class, 'uploadProfilePhoto']);
+    Route::delete('admin/profile/photo', [AuthController::class, 'removeProfilePhoto']);
 
     
 
@@ -119,10 +122,7 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
 
     // ADMIN Routes (Only "admin" role can access)
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('admin/profile/{id}', [AuthController::class, 'getProfile']);
-        Route::post('admin/profile/{id}', [AuthController::class, 'updateProfile']);
-        Route::post('admin/profile/photo/{id}', [AuthController::class, 'uploadProfilePhoto']);
-        Route::delete('admin/profile/photo/{id}', [AuthController::class, 'removeProfilePhoto']);
+     
 
         // Templates
         Route::post('/templates/{id}', [TemplateController::class, 'update']);
