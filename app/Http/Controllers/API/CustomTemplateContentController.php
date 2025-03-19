@@ -71,7 +71,7 @@ class CustomTemplateContentController extends Controller
                 ]);
             }
             
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000'); 
+            $frontendUrl = env('FRONTEND_URL', 'https://yolooo2526-frontend.vercel.app'); 
 
             $rsvpLink = $frontendUrl . '/rsvp?order=' . $order->id;
 
