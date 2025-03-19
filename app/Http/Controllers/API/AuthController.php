@@ -121,14 +121,12 @@ class AuthController extends Controller
     {
         try {
             auth()->logout();
-            // Remove the access token cookie
-            $cookie = Cookie::forget('access_token');
-            return $this->sendResponse([], 'Logged out successfully.')->cookie($cookie);;
+            
+            return $this->sendResponse([], 'Logged out successfully.');
         } catch (\Exception $e) {
-            return $this->sendError('Failed to logout', []);
+            return $this->sendError('Failed to logout'. $e->getMessage(), []);
         }
     }
-
 
     public function forgotPassword(Request $request)
     {
@@ -158,7 +156,6 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         try {
-
             $request->validate([
                 'token' => 'required',
                 'email' => 'required|email|exists:users,email',

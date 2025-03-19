@@ -188,10 +188,9 @@ class DashboardController extends Controller
     public function getEarningsData()
     {
         try {
-            $dailyTarget = 5000; 
+            $dailyTarget = 15000; 
             $weeklyTarget = $dailyTarget * 7; 
             $monthlyTarget = $dailyTarget * now()->daysInMonth; 
-
 
             $todayEarnings = Order::where('status', 'Completed')
                 ->whereDate('created_at', today())
@@ -231,11 +230,6 @@ class DashboardController extends Controller
             return $this->sendError('Error retrieving earnings data: ' . $e->getMessage(), [], 500);
         }
     }
-
-
-
-
-
 
 
 }

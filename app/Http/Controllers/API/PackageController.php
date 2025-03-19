@@ -22,8 +22,6 @@ class PackageController extends Controller
             $activeStatus = $request->query('active_status'); 
             $limit = $request->query('limit', 10); 
             $page = $request->query('page', 1);  
-    
-            // Start the query for retrieving packages, including reviews and images.
             $query = Package::leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') // Join reviews to calculate average rating
                             ->select(
                                 'packages.id',
@@ -60,16 +58,16 @@ class PackageController extends Controller
                             ->orderByDesc(DB::raw('AVG(reviews.rating)')) // Sort by average rating
                             ->paginate($limit, ['*'], 'page', $page);
     
-            // Transform results to include image URLs and other details
-            $packages = $query; // Store the result of the query in the $packages variable
+            
+            $packages = $query; 
     
-            // Transform the results
+            
             $packages->getCollection()->transform(function ($package) {
-                // Format the average_rating to always have one decimal place
-                $averageRating = number_format($package->average_rating, 1);  // Ensures the rating is formatted as a string with one decimal place
+                
+                $averageRating = number_format($package->average_rating, 1);  
     
-                // Determine if this is a top package (rating >= 4.5)
-                $isTopPackage = $averageRating >= 4.5;  // Customize this as needed (e.g., 4.5 and above are considered top packages)
+               
+                $isTopPackage = $averageRating >= 4.5; 
     
                 return [
                     'id' => $package->id,
@@ -190,9 +188,9 @@ class PackageController extends Controller
     public function show($id)
     {
         try {
-            // Try to find the package along with its images and reviews
+            
             $package = Package::with('images')
-                ->leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') // Join reviews to calculate average rating
+                ->leftJoin('reviews', 'packages.id', '=', 'reviews.package_id') 
                 ->select(
                     'packages.id',
                     'packages.service_title',
@@ -228,12 +226,11 @@ class PackageController extends Controller
                 )
                 ->first(); // Use first() since we're only retrieving one package
 
-            // Check if the package was found
+           
             if (!$package) {
                 return $this->sendError('Package not found.', [], 404);
             }
 
-            // Transform the package data to include image URLs and review data
             return $this->sendResponse([
                 'id' => $package->id,
                 'service_title' => $package->service_title,

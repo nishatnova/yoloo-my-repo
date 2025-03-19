@@ -70,8 +70,6 @@ use App\Http\Controllers\API\DashboardController;
 
     Route::post('/template/{order_id}/rsvp', [RSVPController::class, 'submitRSVP']);
 
-    Route::get('/template/{order_id}/rsvp-list', [RSVPController::class, 'getRSVPList']);
-    Route::get('/rsvp/{rsvp_id}', [RSVPController::class, 'getRSVPDetails']);
 
     Route::get('/dashboard-stats', [DashboardController::class, 'getDashboardStats']);
     Route::get('/dashboard-graph', [DashboardController::class, 'getDashboardGraphData']);
@@ -88,7 +86,7 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('/update-password', [AuthController::class, 'updatePassword']);
     Route::post('/job-post/apply/{id}', [JobApplicationController::class, 'apply']);
 
-    Route::post('/template/{template_id}/payment', [TemplatePurchaseController::class, 'initiatePayment']);
+    // Route::post('/template/{template_id}/payment', [TemplatePurchaseController::class, 'initiatePayment']);
     Route::post('/template/{template_id}/confirm-payment', [TemplatePurchaseController::class, 'confirmPayment']);
 
     // Package Payment Routes
@@ -111,6 +109,9 @@ Route::middleware([JwtAuthMiddleware::class])->group(function () {
     Route::post('user/profile', [AuthController::class, 'updateProfile']);
     Route::post('user/profile/photo', [AuthController::class, 'uploadProfilePhoto']);
     Route::delete('user/profile/photo', [AuthController::class, 'removeProfilePhoto']);
+
+    Route::get('/template/{template_id}/rsvp-list', [RSVPController::class, 'getRSVPList']);
+    Route::get('/rsvp/{rsvp_id}', [RSVPController::class, 'getRSVPDetails']);
 
     
 

@@ -18,6 +18,7 @@ class CustomTemplateContentController extends Controller
     public function updateCustomContent(Request $request, $template_id)
     {
         try {
+            
             $validated = $request->validate([
                 'welcome_message' => 'required|string',
                 'description' => 'nullable|string',
@@ -38,6 +39,7 @@ class CustomTemplateContentController extends Controller
             $customContent = CustomTemplateContent::where('order_id', $order->id)
                                                 ->where('template_id', $template_id)
                                                 ->first();
+                                                
 
             if (!$customContent) {
                 $customContent = CustomTemplateContent::create([
@@ -68,13 +70,20 @@ class CustomTemplateContentController extends Controller
                     'city' => $validated['city'],
                 ]);
             }
+            
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000'); 
 
-            return $this->sendResponse($customContent, 'Custom template content updated successfully.');
+            $rsvpLink = $frontendUrl . '/rsvp?order=' . $order->id;
+
+            return $this->sendResponse([
+                'customContent' => $customContent,
+                'user_id' => Auth::user()->id,
+                'rsvp_link' => $rsvpLink,
+              ], 'Custom template content updated successfully.');
 
         } catch (ValidationException $e) {
             $errors = $e->errors();
 
-            // Get the first error message for each field
             $firstErrorMessages = collect($errors)->map(fn($messages) => $messages[0])->implode(', ');
             return $this->sendError($firstErrorMessages, []);
 
@@ -86,9 +95,9 @@ class CustomTemplateContentController extends Controller
     public function previewCustomTemplate(Request $request, $template_id)
     {
         try {
-            // For authenticated user
+            
             if (Auth::check()) {
-                // Get the user's order for the given template_id
+                
                 $order = Order::where('user_id', Auth::id())
                               ->where('template_id', $template_id)
                               ->first();
@@ -97,11 +106,10 @@ class CustomTemplateContentController extends Controller
                     return $this->sendError('You have not purchased this template or the order does not exist.', [], 403);
                 }
             } else {
-                // If the user is not authenticated, return an error or handle as needed
+                
                 return $this->sendError('User not authenticated.', [], 401);
             }
     
-            // Retrieve the custom content for the template using order_id and template_id
             $customContent = CustomTemplateContent::where('order_id', $order->id)
                                                  ->where('template_id', $template_id)
                                                  ->first();
@@ -110,7 +118,6 @@ class CustomTemplateContentController extends Controller
                 return $this->sendError('Custom content not found. Please update the content first.', [], 404);
             }
     
-            // Prepare the preview data
             $previewData = [
                 'welcome_message' => $customContent->welcome_message,
                 'description' => $customContent->description,
@@ -126,7 +133,6 @@ class CustomTemplateContentController extends Controller
                 'order_id' => $customContent->order_id,
             ];
     
-            // Return the preview response
             return $this->sendResponse($previewData, 'Template preview retrieved successfully.');
     
         } catch (\Exception $e) {

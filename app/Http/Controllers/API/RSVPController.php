@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Traits\ResponseTrait;
 use App\Models\RSVP;
 use App\Models\Order;
+use App\Models\CustomTemplateContent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -25,28 +26,38 @@ class RSVPController extends Controller
                 'attendance' => 'required',
             ]);
 
-            // Decode the bring_guests field if provided
             $validated['bring_guests'] = json_decode($validated['bring_guests'], true);
 
-            // Find the order by order_id to get the associated template_id
-            $order = Order::findOrFail($order_id); // Get the order using the provided order_id
-
-            // Get the template_id from the order
+            $order = Order::findOrFail($order_id); 
             $template_id = $order->template_id;
 
-            // Create the RSVP record
-            $rsvp = RSVP::create([
-                'order_id' => $order_id,
-                'template_id' => $template_id,
-                'guest_name' => $validated['guest_name'],
-                'guest_email' => $validated['guest_email'],
-                'guest_phone' => $validated['guest_phone'],
-                'bring_guests' => $validated['bring_guests'],
-                'attendance' => $validated['attendance'],
-            ]);
+            $existingRSVP = RSVP::where('order_id', $order_id)
+                                ->where('guest_email', $validated['guest_email'])
+                                ->first();
 
-            // Return the successful response
-            return $this->sendResponse($rsvp, 'RSVP submitted successfully.');
+            if ($existingRSVP) {
+                $existingRSVP->update([
+                    'guest_name' => $validated['guest_name'],
+                    'guest_phone' => $validated['guest_phone'],
+                    'bring_guests' => $validated['bring_guests'],
+                    'attendance' => $validated['attendance'],
+                ]);
+
+                return $this->sendResponse($existingRSVP, 'RSVP updated successfully.');
+            } else {
+                $rsvp = RSVP::create([
+                    'order_id' => $order_id,
+                    'template_id' => $template_id,
+                    'guest_name' => $validated['guest_name'],
+                    'guest_email' => $validated['guest_email'],
+                    'guest_phone' => $validated['guest_phone'],
+                    'bring_guests' => $validated['bring_guests'],
+                    'attendance' => $validated['attendance'],
+                ]);
+
+                return $this->sendResponse($rsvp, 'RSVP submitted successfully.');
+            }
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->sendError('Validation error: ' . $e->getMessage(), $e->errors(), 422);
         } catch (\Exception $e) {
@@ -54,35 +65,61 @@ class RSVPController extends Controller
         }
     }
 
-    public function getRSVPList(Request $request, $order_id)
+
+    public function getRSVPList(Request $request, $template_id)
     {
         try {
+
+            if (Auth::check()) {
+                
+                $order = Order::where('user_id', Auth::id())
+                              ->where('template_id', $template_id)
+                              ->first();
+    
+                if (!$order) {
+                    return $this->sendError('You have not purchased this template or the order does not exist.', [], 403);
+                }
+
+                $customContent = CustomTemplateContent::where('order_id', $order->id)
+                ->where('template_id', $template_id)
+                ->pluck('rsvp_date')
+                ->first();
+
+                if (!$customContent) {
+                    return $this->sendError('No custom template content found for this order and template.', [], 404);
+                }
+
+            } else {
+                
+                return $this->sendError('User not authenticated.', [], 401);
+            }
+            
             $attendance = $request->query('attendance'); 
             $limit = $request->query('limit', 10); 
             $page = $request->query('page', 1);
     
-            $query = RSVP::with(['order', 'template'])->where('order_id', $order_id);
+            $query = RSVP::with(['order', 'template'])->where('order_id', $order->id);
 
-    
             if ($attendance !== null) {
                 $query->where('attendance', $attendance);
             }
     
             $rsvps = $query->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
     
-            $rsvps->getCollection()->transform(function ($rsvp) {
+            $rsvps->getCollection()->transform(function ($rsvp) use ($customContent) {
                 return [
                     'id' => $rsvp->id,
                     'guest_name' => $rsvp->guest_name,
                     'guest_email' => $rsvp->guest_email,
                     'guest_phone' => $rsvp->guest_phone,
                     'bring_guests' => $rsvp->bring_guests,
-                    'attendance' => $rsvp->attendance,
+                    'attendance' => $rsvp->attendance, 
                 ];
             });
     
             return $this->sendResponse([
                 'rsvps' => $rsvps->items(),
+                'rsvp_date' => $customContent, 
                 'meta' => [
                     'current_page' => $rsvps->currentPage(),
                     'total' => $rsvps->total(),
@@ -96,7 +133,6 @@ class RSVPController extends Controller
         }
     }
 
-    // Method to get details of a single RSVP
     public function getRSVPDetails($rsvp_id)
     {
         try {
