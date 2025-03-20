@@ -147,7 +147,10 @@ class AuthController extends Controller
                 return $this->sendResponse([], 'Password reset link sent to your email.');
             }
 
-            return $this->sendError('Failed to send reset link.', []);
+            return $this->sendError('Failed to send reset link. Please try again later.', []);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->sendError('Validation error: ' . $e->getMessage(), 422);
         } catch (\Exception $e) {
             return $this->sendError('An error occurred during the forgot password process.' .$e->getMessage(), []);
         }
