@@ -22,13 +22,12 @@ class ContactController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email',
                 'subject' => 'required|string|max:255',
-              
             ]);
 
             // Store the contact information in the database
             $contact = Contact::create($request->all());
 
-            Mail::to('nishat15-12132@diu.edu.com')->send(new ContactUsMail($contact));
+            Mail::to('weddingplanner951@gmail.com')->send(new ContactUsMail($contact));
 
             // Return a success response
             return $this->sendResponse([

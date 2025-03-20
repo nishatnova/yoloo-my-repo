@@ -45,7 +45,7 @@ class JobApplicationController extends Controller
         Mail::to($application->applicant_email)->send(new UserNotificationMail($application, $jobPost));
 
         // Send Email to Admin
-        Mail::to('nishat15-12132@diu.edu.bd')->send(new AdminNotificationMail($application, $jobPost));
+        Mail::to('weddingplanner951@gmail.com')->send(new AdminNotificationMail($application, $jobPost));
 
         return $this->sendResponse([
             'application' => $application,
