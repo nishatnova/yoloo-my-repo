@@ -149,7 +149,7 @@ class AuthController extends Controller
 
             return $this->sendError('Failed to send reset link.', []);
         } catch (\Exception $e) {
-            return $this->sendError('An error occurred during the forgot password process.', []);
+            return $this->sendError('An error occurred during the forgot password process.' .$e->getMessage(), []);
         }
     }
 

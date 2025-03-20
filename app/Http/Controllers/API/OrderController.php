@@ -36,6 +36,8 @@ class OrderController extends Controller
                     'booking_date' => $order->created_at->format('Y-M-d'),
                     'status' => $order->status,
                     'amount' => intval($order->amount),
+                    'template_id' => $order->template_id,
+                    'package_id' => $order->package_id,
                 ];
             });
     
