@@ -262,7 +262,7 @@ class AuthController extends Controller
 
             $profilePhotoUrl = $user->profile_photo
             ? asset('storage/' . $user->profile_photo)
-            : asset('storage/profile_photos/user.png');
+            : asset('user.png');
 
             return $this->sendResponse([
                 'id' => $user->id,

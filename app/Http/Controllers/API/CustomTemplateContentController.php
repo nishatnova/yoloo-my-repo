@@ -32,6 +32,8 @@ class CustomTemplateContentController extends Controller
                 'city' => 'required|string',
             ]);
 
+            $validated['description'] = $validated['description'] ?? null;
+
             $order = Order::where('user_id', Auth::user()->id)
                         ->where('template_id', $template_id)
                         ->firstOrFail();
