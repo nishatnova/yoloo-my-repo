@@ -149,7 +149,7 @@ class PackageInquiryController extends Controller
                 }
                 if ($inquiry->packageInquireStaff->Application) {
                     $assignedStaff[] = [
-                        'role' => 'Decorate',
+                        'role' => 'Decorator',
                         'name' => $inquiry->packageInquireStaff->Application->applicant_name,
                         'id' => $inquiry->packageInquireStaff->Application->id,
                     ];
