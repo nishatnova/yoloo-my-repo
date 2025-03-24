@@ -155,14 +155,13 @@ class JobApplicationController extends Controller
     public function getApprovedDecorator(Request $request)
     {
         try {
-            $decorator = JobApplication::where('role', 'Decorator')->where('status', 'Approved')->get(['id', 'applicant_name', 'role']);
-
+            $decorator = JobApplication::where('role', 'Decorate')->where('status', 'Approved')->get(['id', 'applicant_name', 'role']);
 
             return $this->sendResponse([
                 'decorator' => $decorator,
             ], 'Approved job photographer retrieved successfully.');
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving approved job photographer: ' . $e->getMessage(), [], 500);
+            return $this->sendError('Error retrieving approved job decorator: ' . $e->getMessage(), [], 500);
         }
     }
 

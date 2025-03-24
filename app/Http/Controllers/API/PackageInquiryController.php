@@ -41,7 +41,7 @@ class PackageInquiryController extends Controller
                     if ($inquiry->packageInquireStaff->photographerApplication) {
                         $assignedStaffCount++;
                     }
-                    if ($inquiry->packageInquireStaff->decoratorApplication) {
+                    if ($inquiry->packageInquireStaff->Application) {
                         $assignedStaffCount++;
                     }
                     if ($inquiry->packageInquireStaff->cateringApplication) {
@@ -100,7 +100,7 @@ class PackageInquiryController extends Controller
                     if ($inquiry->packageInquireStaff->photographerApplication) {
                         $assignedStaffCount++;
                     }
-                    if ($inquiry->packageInquireStaff->decoratorApplication) {
+                    if ($inquiry->packageInquireStaff->Application) {
                         $assignedStaffCount++;
                     }
                     if ($inquiry->packageInquireStaff->cateringApplication) {
@@ -147,11 +147,11 @@ class PackageInquiryController extends Controller
                         'id' => $inquiry->packageInquireStaff->photographerApplication->id,
                     ];
                 }
-                if ($inquiry->packageInquireStaff->decoratorApplication) {
+                if ($inquiry->packageInquireStaff->Application) {
                     $assignedStaff[] = [
-                        'role' => 'Decorator',
-                        'name' => $inquiry->packageInquireStaff->decoratorApplication->applicant_name,
-                        'id' => $inquiry->packageInquireStaff->decoratorApplication->id,
+                        'role' => '',
+                        'name' => $inquiry->packageInquireStaff->Application->applicant_name,
+                        'id' => $inquiry->packageInquireStaff->Application->id,
                     ];
                 }
                 if ($inquiry->packageInquireStaff->cateringApplication) {
@@ -212,7 +212,7 @@ class PackageInquiryController extends Controller
         try {
             $validated = $request->validate([
                 'photographer_application_id' => 'nullable|exists:job_applications,id',
-                'decorator_application_id' => 'nullable|exists:job_applications,id',
+                '_application_id' => 'nullable|exists:job_applications,id',
                 'catering_application_id' => 'nullable|exists:job_applications,id',
             ]);
 
@@ -222,8 +222,8 @@ class PackageInquiryController extends Controller
                 ->where('id', $validated['photographer_application_id'] ?? null)
                 ->first();
 
-            $decoratorApplication = JobApplication::where('status', 'Approved')
-                ->where('id', $validated['decorator_application_id'] ?? null)
+            $Application = JobApplication::where('status', 'Approved')
+                ->where('id', $validated['_application_id'] ?? null)
                 ->first();
 
             $cateringApplication = JobApplication::where('status', 'Approved')
@@ -236,7 +236,7 @@ class PackageInquiryController extends Controller
              
                 $staffAssignment->update([
                     'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
-                    'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
+                    '_application_id' => $Application ? $Application->id : null,
                     'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
                 ]);
 
@@ -246,7 +246,7 @@ class PackageInquiryController extends Controller
                 $staffAssignment = PackageInquireStaff::create([
                     'package_inquiry_id' => $inquiry->id,
                     'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
-                    'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
+                    '_application_id' => $Application ? $Application->id : null,
                     'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
                 ]);
 
