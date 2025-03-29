@@ -147,11 +147,11 @@ class PackageInquiryController extends Controller
                         'id' => $inquiry->packageInquireStaff->photographerApplication->id,
                     ];
                 }
-                if ($inquiry->packageInquireStaff->Application) {
+                if ($inquiry->packageInquireStaff->decoratorApplication) {
                     $assignedStaff[] = [
                         'role' => 'Decorate',
-                        'name' => $inquiry->packageInquireStaff->Application->applicant_name,
-                        'id' => $inquiry->packageInquireStaff->Application->id,
+                        'name' => $inquiry->packageInquireStaff->decoratorApplication->applicant_name,
+                        'id' => $inquiry->packageInquireStaff->decoratorApplication->id,
                     ];
                 }
                 if ($inquiry->packageInquireStaff->cateringApplication) {
