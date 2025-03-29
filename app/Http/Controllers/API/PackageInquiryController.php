@@ -41,7 +41,7 @@ class PackageInquiryController extends Controller
                     if ($inquiry->packageInquireStaff->photographerApplication) {
                         $assignedStaffCount++;
                     }
-                    if ($inquiry->packageInquireStaff->Application) {
+                    if ($inquiry->packageInquireStaff->decoratorApplication) {
                         $assignedStaffCount++;
                     }
                     if ($inquiry->packageInquireStaff->cateringApplication) {
@@ -100,7 +100,7 @@ class PackageInquiryController extends Controller
                     if ($inquiry->packageInquireStaff->photographerApplication) {
                         $assignedStaffCount++;
                     }
-                    if ($inquiry->packageInquireStaff->Application) {
+                    if ($inquiry->packageInquireStaff->decoratorApplication) {
                         $assignedStaffCount++;
                     }
                     if ($inquiry->packageInquireStaff->cateringApplication) {
@@ -222,7 +222,7 @@ class PackageInquiryController extends Controller
                 ->where('id', $validated['photographer_application_id'] ?? null)
                 ->first();
 
-            $Application = JobApplication::where('status', 'Approved')
+            $decoratorApplication = JobApplication::where('status', 'Approved')
                 ->where('id', $validated['decorator_application_id'] ?? null)
                 ->first();
 
@@ -236,7 +236,7 @@ class PackageInquiryController extends Controller
              
                 $staffAssignment->update([
                     'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
-                    'decorator_application_id' => $Application ? $Application->id : null,
+                    'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
                     'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
                 ]);
 
@@ -246,7 +246,7 @@ class PackageInquiryController extends Controller
                 $staffAssignment = PackageInquireStaff::create([
                     'package_inquiry_id' => $inquiry->id,
                     'photographer_application_id' => $photographerApplication ? $photographerApplication->id : null,
-                    'decorator_application_id' => $Application ? $Application->id : null,
+                    'decorator_application_id' => $decoratorApplication ? $decoratorApplication->id : null,
                     'catering_application_id' => $cateringApplication ? $cateringApplication->id : null,
                 ]);
 
