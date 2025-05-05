@@ -13,6 +13,7 @@ use Carbon\Carbon;
 class PackageInquiryController extends Controller
 {
     use ResponseTrait;
+    
     public function getCompletedPackageInquiries(Request $request)
     {
         try {

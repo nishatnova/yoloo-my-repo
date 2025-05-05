@@ -14,6 +14,7 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+        $defaultProfilePhoto = 'user.png';
         // List of admins to create
         $admins = [
             [
@@ -44,6 +45,7 @@ class AdminSeeder extends Seeder
                     'name' => $adminData['name'],
                     'password' => Hash::make($adminData['password']),
                     'role' => $adminData['role'],
+                    'profile_photo' => $defaultProfilePhoto,
                 ]
             );
 
